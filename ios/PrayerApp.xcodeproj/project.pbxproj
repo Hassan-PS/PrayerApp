@@ -95,8 +95,8 @@
 		F2A10001000000CC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F2A10001000000AA /* Localizable.strings */; };
 		F2A10001000000DD /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = F2A10001000000BB /* Localizable.stringsdict */; };
 		FA11B0071AB0000000000001 /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FA11B0071AA0000000000001 /* Amiri-Regular.ttf */; };
-		FA11B0071AB0000000000010 /* quran in Resources */ = {isa = PBXBuildFile; fileRef = FA11B0071AA0000000000010 /* quran */; };
 		FA11B0071AB0000000000002 /* AmiriQuran.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FA11B0071AA0000000000002 /* AmiriQuran.ttf */; };
+		FA11B0071AB0000000000010 /* quran in Resources */ = {isa = PBXBuildFile; fileRef = FA11B0071AA0000000000010 /* quran */; };
 		FA11B0071AC0000000000002 /* RateApp.m in Sources */ = {isa = PBXBuildFile; fileRef = FA11B0071AC0000000000001 /* RateApp.m */; };
 		FA22B0071AD0000000000013 /* MushafFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA22B0071AD0000000000011 /* MushafFont.swift */; };
 		FA22B0071AD0000000000014 /* MushafFont.m in Sources */ = {isa = PBXBuildFile; fileRef = FA22B0071AD0000000000012 /* MushafFont.m */; };
@@ -256,8 +256,8 @@
 		F2A100030120001 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.stringsdict"; sourceTree = "<group>"; };
 		F4D4DB9CBD682D1BF5562CC3 /* CompassModule.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = CompassModule.m; path = PrayerApp/CompassModule.m; sourceTree = "<group>"; };
 		FA11B0071AA0000000000001 /* Amiri-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Amiri-Regular.ttf"; path = "PrayerApp/Resources/fonts/Amiri-Regular.ttf"; sourceTree = "<group>"; };
-		FA11B0071AA0000000000010 /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = "../assets/quran"; sourceTree = "<group>"; };
 		FA11B0071AA0000000000002 /* AmiriQuran.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = AmiriQuran.ttf; path = PrayerApp/Resources/fonts/AmiriQuran.ttf; sourceTree = "<group>"; };
+		FA11B0071AA0000000000010 /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../assets/quran; sourceTree = "<group>"; };
 		FA11B0071AC0000000000001 /* RateApp.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RateApp.m; path = PrayerApp/RateApp.m; sourceTree = "<group>"; };
 		FA22B0071AD0000000000011 /* MushafFont.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MushafFont.swift; path = PrayerApp/MushafFont.swift; sourceTree = "<group>"; };
 		FA22B0071AD0000000000012 /* MushafFont.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; name = MushafFont.m; path = PrayerApp/MushafFont.m; sourceTree = "<group>"; };
@@ -856,7 +856,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = PrayerApp/PrayerApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
@@ -878,7 +878,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -905,7 +905,7 @@
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = PrayerApp/PrayerApp.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
@@ -926,7 +926,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1098,7 +1098,7 @@
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CODE_SIGN_ENTITLEMENTS = PrayerWidgetExtension/PrayerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
@@ -1121,7 +1121,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hassan.prayerapp.PrayerWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1142,7 +1142,7 @@
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CODE_SIGN_ENTITLEMENTS = PrayerWidgetExtension/PrayerWidgetExtension.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
@@ -1165,7 +1165,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hassan.prayerapp.PrayerWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1186,7 +1186,7 @@
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CODE_SIGN_ENTITLEMENTS = MihrabLiveActivity/MihrabLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1203,7 +1203,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hassan.prayerapp.MihrabLiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1225,7 +1225,7 @@
 				CLANG_ENABLE_EXPLICIT_MODULES = NO;
 				CODE_SIGN_ENTITLEMENTS = MihrabLiveActivity/MihrabLiveActivity.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 261;
+				CURRENT_PROJECT_VERSION = 262;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = GAW23HT439;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -1242,7 +1242,7 @@
 					"$(SDKROOT)/System/iOSSupport/usr/lib/swift",
 					"$(inherited)",
 				);
-				MARKETING_VERSION = 2.16.0;
+				MARKETING_VERSION = 2.17.0;
 				PRESERVE_DEAD_CODE_INITS_AND_TERMS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.hassan.prayerapp.MihrabLiveActivity;
 				PRODUCT_NAME = "$(TARGET_NAME)";

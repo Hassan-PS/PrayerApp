@@ -531,3 +531,12 @@ The catalyst abort was the ordinary one, unrelated and unremarkable.
 Ran clean on the first attempt.
 
 **Lesson:** none needed — clean run, no change to the cycle.
+
+## 2.17.0 (262) — 2026-09-06
+
+Took 2 aborted attempt(s) before it ran clean:
+
+  - 1 missing release notes: en-US/changelogs/262.txt
+  - 1 working tree has tracked changes — commit or stash them first
+
+**Lesson:** _(unfilled)_
