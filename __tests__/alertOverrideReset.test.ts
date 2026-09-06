@@ -275,3 +275,24 @@ describe('the row and the card agree about whether anything is temporary', () =>
     expect(card).toContain('alertModeOf,');
   });
 });
+
+
+describe('the boundary alerts go through the same rule as everything else', () => {
+  const ts = read('src/notifications/prayerNotifications.ts');
+
+  it('asks modeAt, so the one-occurrence override reaches them', () => {
+    // Not the standing mode: silencing tonight's Isha from the card has
+    // to silence tonight's boundary and say nothing about tomorrow's.
+    expect(ts).toMatch(
+      /const prayerSpeaksAt = \(name: string, atMs: number\) =>\s*\n?\s*modeAt\(name, atMs\) !== 'silent';/,
+    );
+  });
+
+  it('is passed to both builders, not just the lead-in one', () => {
+    // The end of a window is still an alert about that prayer.
+    const lead = ts.split('buildDaruriAlertEvents(')[1] ?? '';
+    expect(lead.slice(0, 400)).toContain('prayerSpeaksAt,');
+    const end = ts.split('buildDaruriEndEvents(')[1] ?? '';
+    expect(end.slice(0, 400)).toContain('prayerSpeaksAt,');
+  });
+});

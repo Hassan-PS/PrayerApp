@@ -642,6 +642,21 @@ export async function syncPrayerNotifications(params: {
           daruriDatesFrom(params.baseDate ?? now),
         ));
 
+  /**
+   * A boundary belongs to its prayer, and follows it into silence.
+   *
+   * `silent` means no alarm is registered — the reading that also keeps
+   * the prayer off the lock screen, and the one the pre-prayer reminder
+   * already obeys. The ikhtiyārī-window alerts did not, so someone who
+   * silenced Fajr to avoid being woken at 04:30 was woken at 05:00
+   * instead by an alert about the prayer they had just switched off.
+   * Through `modeAt`, so the Live Activity's one-occurrence override
+   * carries here too: silencing tonight's Isha silences tonight's
+   * boundary and says nothing about tomorrow's.
+   */
+  const prayerSpeaksAt = (name: string, atMs: number) =>
+    modeAt(name, atMs) !== 'silent';
+
   const daruriEvents = buildDaruriAlertEvents(
     [params.today, ...(params.tomorrow ? [params.tomorrow] : []), ...(params.week?.slice(2, 4) ?? [])],
     params.baseDate ?? now,
@@ -649,6 +664,7 @@ export async function syncPrayerNotifications(params: {
     daruriMinutes,
     now,
     daruriLogged,
+    prayerSpeaksAt,
   );
 
   const daruriWeek = [
@@ -663,6 +679,9 @@ export async function syncPrayerNotifications(params: {
         params.daruriAlerts ?? [],
         now,
         daruriLogged,
+        // Same rule as the lead-in alert above: the end of a window is
+        // still an alert about that prayer.
+        prayerSpeaksAt,
       )
     : [];
 

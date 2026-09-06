@@ -582,6 +582,36 @@ export function coerceDaruriAlerts(value: unknown): DaruriKey[] {
  * them on the plain notification sound for the same reason Sunrise and
  * the night marks get it (`isNonPrayerEvent`).
  */
+/**
+ * Ask the caller whether this boundary's prayer is audible on this day.
+ *
+ * The prayer's instant is `base` plus its own clock time — `base`, not
+ * the boundary's date: Ishāʾ's boundary can land after midnight while
+ * the prayer it belongs to is still on the evening before, and the
+ * question being asked is about the prayer.
+ *
+ * A clock that will not parse leaves the alert standing. Dropping an
+ * alert because a time could not be read would be the wrong way round:
+ * the caller asked for this boundary, and silence has to be something
+ * chosen rather than something that happens.
+ */
+function prayerSpeaks(
+  isAudible: ((prayerName: string, prayerAtMs: number) => boolean) | undefined,
+  day: TimingsMap,
+  base: Date,
+  key: DaruriKey,
+): boolean {
+  if (!isAudible) return true;
+  const prayer = DARURI_OF[key];
+  const clock = day[prayer];
+  if (!clock) return true;
+  try {
+    return isAudible(prayer, combineLocalDateAndTime(base, clock).getTime());
+  } catch {
+    return true;
+  }
+}
+
 export function buildDaruriAlertEvents(
   week: TimingsMap[],
   baseDay: Date,
@@ -589,6 +619,30 @@ export function buildDaruriAlertEvents(
   leadMinutes: number,
   now: Date,
   logged?: LoggedByDate,
+  /**
+   * Is the prayer this boundary belongs to going to announce itself at all?
+   *
+   * Passed in rather than read here because the answer depends on the
+   * per-prayer alert mode AND on the one-occurrence override the Live
+   * Activity's button can set, neither of which this module knows about.
+   * Given the prayer's own name and instant, so the caller can answer for
+   * THAT occurrence rather than for the prayer in general.
+   *
+   * ── WHY A BOUNDARY FOLLOWS ITS PRAYER INTO SILENCE ──────────────────
+   *
+   * `silent` on a row means no alarm is registered — not a muted one. It is
+   * the reading that also keeps the prayer off the lock screen, and the
+   * pre-prayer reminder already goes with it. The boundary alert did not,
+   * so someone who silenced Fajr to avoid being woken at 04:30 was still
+   * woken at 05:00 by "Fajr's first time ends at 05:15" — an alert about
+   * the prayer they had just switched off, in the same sleep.
+   *
+   * Opt-in cuts the other way too: turning a boundary alert on is a
+   * standing choice about a boundary, and silencing a prayer is a more
+   * specific choice about one prayer. The specific one wins, and the app
+   * ends up with one meaning for silence rather than two.
+   */
+  isAudible?: (prayerName: string, prayerAtMs: number) => boolean,
 ): { name: DaruriKey; at: Date }[] {
   if (enabled.length === 0 || week.length === 0) return [];
   const chosen = new Set(enabled.filter(isDaruriKey));
@@ -605,6 +659,7 @@ export function buildDaruriAlertEvents(
       // the day the WINDOW belongs to, which for Ishāʾ can be the day
       // before the alert lands.
       if (daruriAnswered(logged, localYmd(base), key)) continue;
+      if (!prayerSpeaks(isAudible, day, base, key)) continue;
       const clock = day[key];
       if (!clock) continue;
       let at: Date;
@@ -761,6 +816,8 @@ export function buildDaruriEndEvents(
   enabled: readonly string[],
   now: Date,
   logged?: LoggedByDate,
+  /** See the same parameter on `buildDaruriAlertEvents`. */
+  isAudible?: (prayerName: string, prayerAtMs: number) => boolean,
 ): { at: Date; keys: DaruriKey[] }[] {
   if (enabled.length === 0 || week.length === 0) return [];
   const chosen = new Set(enabled.filter(isDaruriKey));
@@ -768,9 +825,14 @@ export function buildDaruriEndEvents(
 
   const byInstant = new Map<number, Set<DaruriKey>>();
   const dayStart = startOfLocalDay(baseDay);
-  week.forEach((_day, offset) => {
+  week.forEach((day, offset) => {
     for (const key of DARURI_KEYS) {
       if (!chosen.has(key)) continue;
+      if (
+        !prayerSpeaks(isAudible, day, addDays(dayStart, offset), key)
+      ) {
+        continue;
+      }
       // A prayer that has been recorded does not expire — telling someone
       // a prayer they logged is now qaḍāʾ is the worst of these to get
       // wrong, because it is the one that reads as an accusation.
