@@ -578,8 +578,13 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
         // The two look different on the button on purpose — see the label
         // built with the action below.
         val alertMode = LiveActivityAlertModes.effectiveMode(prefs, p, nextEpochMs, nextKey)
-        val alertOverridden =
-          LiveActivityAlertModes.overrideFor(prefs, nextEpochMs, nextKey) != null
+        // Overridden means DIFFERENT FROM THE ROW, not merely stored. The
+        // override is written against an instant and the standing setting can
+        // move under it — set Fajr to silent on the card, then set the Fajr
+        // row to silent on the home screen, and the two now say the same
+        // thing. Marking that "· once" would tell the reader their permanent
+        // setting had not taken, which is the opposite of what happened.
+        val alertOverridden = LiveActivityAlertModes.isOverridden(prefs, p, nextEpochMs, nextKey)
         // User-toggled: when hidden, keep the card in the shade but drop it off
         // the lock screen / always-on display (VISIBILITY_SECRET) and skip the
         // status-bar chip promotion below. Independent of the master on/off.

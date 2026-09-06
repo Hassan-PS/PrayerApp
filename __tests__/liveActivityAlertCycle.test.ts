@@ -52,6 +52,9 @@ const RECEIVER = read(
 const MODULE = read(
   'android/app/src/main/java/com/prayer_times/MihrabLiveActivityModule.kt',
 );
+const SERVICE = read(
+  'android/app/src/main/java/com/prayer_times/MihrabLiveActivityService.kt',
+);
 
 /** Source with `//` comment lines dropped — a claim about what the code
  *  does must not be satisfied by a comment that mentions it. */
@@ -329,5 +332,109 @@ describe('no locale is still carrying the retired strings', () => {
     expect(j.liveActivity.justThisOne.length).toBeGreaterThan(0);
     expect(j.liveActivity.muteNext).toBeUndefined();
     expect(j.liveActivity.unmuteNext).toBeUndefined();
+  });
+});
+
+
+describe('the card the button rebuilds is the card that is on screen', () => {
+  /*
+   * The service's walk to the next event lived entirely in `lastPayload`, a
+   * field on the service. Everything that rebuilds the card from OUTSIDE it
+   * — both action buttons, which re-post the instant they are pressed —
+   * reads the PERSISTED payload, and that was whatever JS last wrote.
+   *
+   * Seen on the emulator before the fix: open the app at the First Third,
+   * press HOME, let the card advance to Islamic Midnight, press the button.
+   * The card fell back to "First Third · -40:19" — a countdown running
+   * backwards past an event that had already gone — and the button went with
+   * it, aiming the override at an instant nobody can be alerted at.
+   *
+   * The first fix covered the ticker and MISSED the alarm path, which is the
+   * one that matters: in doze the handler ticker is suspended and the exact
+   * wake alarm is the only thing that advances the card, so for a phone in a
+   * pocket the alarm IS the normal case. These tests hold both.
+   */
+  it('decides from the stored payload, not from a field on the service', () => {
+    // `lastAlarmEpoch` means "changed since this instance last looked", and
+    // the alarm path can have advanced and set it already — which left the
+    // tick with nothing to do and the write unmade. That was the hole.
+    expect(code(SERVICE)).toMatch(
+      /private fun persistIfAdvanced\(candidate: String\)[\s\S]*?loadPayload\(this\)[\s\S]*?if \(stored == next\) return[\s\S]*?savePayload\(this, candidate\)/,
+    );
+  });
+
+  it('is called from the ticker', () => {
+    const tick = code(SERVICE).split('private fun scheduleTicker').at(-1) ?? '';
+    expect(tick).toContain('persistIfAdvanced(currentPayload)');
+  });
+
+  it('is called from the wake-alarm path too, which doze leaves alone', () => {
+    const start = code(SERVICE).split('override fun onStartCommand').at(-1) ?? '';
+    expect(start).toContain('persistIfAdvanced(payload)');
+  });
+
+  it('is not nested inside the alarm-rearm branch', () => {
+    // Where the first attempt put it, and where it did not fire.
+    const tick = code(SERVICE).split('private fun scheduleTicker').at(-1) ?? '';
+    const branch = tick.indexOf('if (nextEpoch != lastAlarmEpoch)');
+    const close = tick.indexOf('scheduleWakeAlarm(currentPayload)');
+    const call = tick.indexOf('persistIfAdvanced(currentPayload)');
+    expect(branch).toBeGreaterThan(-1);
+    expect(call).toBeGreaterThan(close);
+  });
+
+  it('rebuilds from the persisted payload in the receiver', () => {
+    // Which is only safe because of the above.
+    expect(code(RECEIVER)).toContain('MihrabLiveActivityModule.loadPayload(ctx)');
+  });
+});
+
+describe('a tap can only speak for an event that has not arrived', () => {
+  it('ignores one aimed at a past instant', () => {
+    // One PendingIntent is reused across re-posts, so between a prayer
+    // arriving and the next rebuild the button still carries the epoch that
+    // just passed. A tap there would write an override for a moment nobody
+    // can be alerted at, and throw away one the user had set for it.
+    expect(code(RECEIVER)).toMatch(
+      /if \(epoch <= System\.currentTimeMillis\(\)\) \{[\s\S]{0,200}?return\s*\n\s*\}/,
+    );
+  });
+
+  it('and the task refuses one too, on the other side of the boundary', () => {
+    const ts = read('src/notifications/adhanMute.ts');
+    expect(ts).toMatch(/if \(epoch <= Date\.now\(\)\) return;/);
+  });
+});
+
+describe('the "once" marker means something', () => {
+  it('is drawn from a comparison with the row, not from mere existence', () => {
+    // An override is written against an instant and the standing setting can
+    // move under it. Set Fajr to silent on the card, then set the Fajr row to
+    // silent on the home screen, and the two agree — marking that "· once"
+    // would tell the reader their permanent change had not taken.
+    expect(code(KOTLIN)).toMatch(
+      /fun isOverridden\([\s\S]*?val base = baseModeFor\(p, key\)[\s\S]*?base\.isEmpty\(\) \|\| o != coerce\(key, base\)/,
+    );
+    expect(code(MODULE)).toContain(
+      'LiveActivityAlertModes.isOverridden(prefs, p, nextEpochMs, nextKey)',
+    );
+  });
+});
+
+describe('there is one list of what is not a prayer, on each side', () => {
+  it('the service does not keep a third copy', () => {
+    // It did, for a payload flag the walks no longer set — and the First
+    // Third was missing from it, which made the evening mark the one event an
+    // auto-advance could still hand the adhan. Three copies is how that
+    // happens.
+    expect(code(SERVICE)).not.toMatch(/fun isNonPrayerKey/);
+    expect(code(SERVICE)).not.toContain('adhanActionEnabled');
+  });
+
+  it('and nothing clears a per-hop flag that no longer exists', () => {
+    // The guard travels on the row now: the modes an event may hold are
+    // decided from its own key, on every build. A hop cannot outrun that.
+    expect(code(SERVICE)).not.toMatch(/put\("adhanActionEnabled"/);
+    expect(code(SERVICE)).not.toMatch(/put\("alertActionEnabled"/);
   });
 });

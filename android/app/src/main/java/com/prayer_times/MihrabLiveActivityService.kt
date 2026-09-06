@@ -132,6 +132,44 @@ class MihrabLiveActivityService : Service() {
     }
   }
 
+  /**
+   * Write an advance down, whenever the card has moved on from what is
+   * stored.
+   *
+   * THE WALK USED TO LIVE ONLY IN MEMORY. `lastPayload` is a field on this
+   * service; everything that rebuilds the card from OUTSIDE it — both action
+   * buttons, which re-post the moment they are pressed — reads the PERSISTED
+   * payload, and that was whatever JS last wrote. Open the app at the First
+   * Third, lock the phone, press the button an hour later and the card was
+   * rebuilt from a payload naming an event that had already passed: it jumped
+   * backwards onto a countdown running the wrong way (`-40:19`), and the
+   * button went with it, aiming the override at an event nobody can be
+   * alerted at any more. It also handed the headless task that event's name
+   * for the title of the alert it was re-creating.
+   *
+   * Called from BOTH places that advance, because there are two and covering
+   * one is the same bug with a smaller window. The ticker is the obvious one.
+   * The other is `onStartCommand`: the exact wake alarm fires at a prayer
+   * boundary and re-enters here, and in doze that is the ONLY one that runs —
+   * the handler ticker is suspended, so for a phone in a pocket the alarm
+   * path is the normal case and the ticker is the exception.
+   *
+   * Compares the instant rather than the string, and writes only when it has
+   * changed, so this costs one prefs read a minute and a write a few times a
+   * day.
+   */
+  private fun persistIfAdvanced(candidate: String) {
+    runCatching {
+      val next = JSONObject(candidate).optLong("nextEpochMs", 0L)
+      if (next <= 0L) return
+      val storedJson = MihrabLiveActivityModule.loadPayload(this)
+      val stored = storedJson?.let { JSONObject(it).optLong("nextEpochMs", -1L) } ?: -1L
+      if (stored == next) return
+      MihrabLiveActivityModule.savePayload(this, candidate)
+      Log.i(TAG, "persisted advance: nextEpochMs $stored -> $next")
+    }.onFailure { Log.w(TAG, "persist advanced payload failed", it) }
+  }
+
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     // Payload source: a fresh push from JS (EXTRA_PAYLOAD), or — when the OS or
     // our own wake-alarm restarted us with no extra — the persisted last
@@ -147,6 +185,8 @@ class MihrabLiveActivityService : Service() {
         ?: tryAdvanceToNextPrayer(incoming)
         ?: incoming
       lastPayload = payload
+      // The wake-alarm path. In doze this is the only advance that runs.
+      persistIfAdvanced(payload)
       // Channel safety net — required on Android 8+ before startForeground.
       // The JS bridge creates them too, but the service can run independent
       // of that path (system-restarted instance after OOM, etc.).
@@ -222,6 +262,12 @@ class MihrabLiveActivityService : Service() {
             lastAlarmEpoch = nextEpoch
             scheduleWakeAlarm(currentPayload)
           }
+          // Outside that branch on purpose. `lastAlarmEpoch` is a field, so
+          // it says "changed since THIS service instance last looked" — and
+          // the alarm path above can have advanced and set it already, which
+          // would leave the tick with nothing to do and the write unmade.
+          // What decides here is the stored payload itself.
+          persistIfAdvanced(currentPayload)
         } catch (t: Throwable) {
           Log.w(TAG, "ticker re-post failed", t)
         }
@@ -352,12 +398,15 @@ class MihrabLiveActivityService : Service() {
       updated.put("nextTime", next.time)
       updated.put("nextTimeDisplay", next.display)
       updated.put("title", "${next.name} · ${next.display}")
-      // The mute button belongs to the CALL TO PRAYER. JS worked the flag out
-      // for whatever was next when it last synced; every hop this walk makes
-      // afterwards is its own, and Sunrise or a night mark must never inherit
-      // a button that would put the adhan on them. Only ever cleared here —
-      // turning it back on is JS's call, on the next sync.
-      if (isNonPrayerKey(next.key)) updated.put("adhanActionEnabled", false)
+      // NOTHING TO CLEAR HERE ANY MORE. This used to switch off a payload
+      // flag when the walk stepped onto Sunrise or a night mark, because the
+      // action was a "Mute next adhan" button that JS had enabled for
+      // whatever was next at sync time, and a hop it knew nothing about
+      // could leave that button pointed at a time that must never sound the
+      // adhan. The button is a three-way alert-mode control now and the
+      // guard travels with the row instead: the modes an event may hold are
+      // decided from its own key, on every build, by
+      // LiveActivityAlertModes.modesFor. A hop cannot outrun that.
 
       // Swap the displayed prayer list to the day currently in progress so any
       // list rendering (and the notifee fallback path) reflects today's times.
@@ -399,15 +448,12 @@ class MihrabLiveActivityService : Service() {
     }
   }
 
-  /** Sunrise and the three night marks — times, not salāh. Mirrors
-   *  OPTIONAL_TIME_KEYS in src/types/prayer.ts, First Third included: it was
-   *  the one key missing here, so the evening mark was the one event that
-   *  could still be handed the adhan by an auto-advance. */
-  private fun isNonPrayerKey(key: String): Boolean =
-      key.equals("Sunrise", ignoreCase = true) ||
-          key.equals("Midnight", ignoreCase = true) ||
-          key.equals("Lastthird", ignoreCase = true) ||
-          key.equals("Firstthird", ignoreCase = true)
+  // A THIRD COPY OF "which of these is not a prayer" used to live here, for
+  // the flag the two walks above no longer clear. Three copies of one list is
+  // how the First Third came to be missing from one of them — the evening
+  // mark was, for a while, the single event an auto-advance could still hand
+  // the adhan. There are two copies now, LiveActivityAlertModes.kt and
+  // src/types/prayer.ts, and a test holds them to each other.
 
   /**
    * If `nextEpochMs` in the cached payload has passed, find the next event
@@ -498,14 +544,8 @@ class MihrabLiveActivityService : Service() {
         updated.put("nextTime", row.time)
         updated.put("nextTimeDisplay", row.display)
         updated.put("title", "${row.name} · ${row.display}")
-        // The mute button belongs to the CALL TO PRAYER, and this walk steps
-        // onto Sunrise and the night marks deliberately so the card can count
-        // down to them. JS computed `adhanActionEnabled` for whatever was next
-        // at sync time and gets no say in this hop, so leaving the flag alone
-        // left a button pointed at Sunrise — and the headless task behind it
-        // would have scheduled Sunrise on the adhan channel. Only ever cleared
-        // here: turning it back on is JS's call, on the next sync.
-        if (isNonPrayerKey(row.key)) updated.put("adhanActionEnabled", false)
+        // Same as the `days[]` walk above: the flag this used to clear is
+        // gone, and the guard it stood for now travels on the row.
         Log.i(TAG, "Auto-advance: $currentKey → ${row.key} @ ${row.time} (epoch=$epochMs)")
         return updated.toString()
       }

@@ -84,6 +84,20 @@ class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
     val epoch = intent.getLongExtra(EXTRA_EPOCH, 0L)
     val name = intent.getStringExtra(EXTRA_NAME) ?: ""
     if (epoch <= 0L) return
+    // A TAP AIMED AT AN EVENT THAT HAS ALREADY ARRIVED CHANGES NOTHING.
+    //
+    // One PendingIntent is kept alive across every re-post (FLAG_UPDATE_
+    // CURRENT), so its extras track the card — but only as often as the card
+    // is rebuilt. Between the instant a prayer arrives and the next rebuild,
+    // the button on screen still carries the epoch that has just passed.
+    // Without this, a tap in that window would write an override for a
+    // moment nobody can be alerted at any more, and — worse — throw away one
+    // the user had set for it. The alert itself is already beyond changing:
+    // the headless task refuses a past epoch too.
+    if (epoch <= System.currentTimeMillis()) {
+      Log.i(TAG, "ignoring alert-mode tap for a past event: epoch=$epoch name=$name")
+      return
+    }
 
     val prefs = ctx.getSharedPreferences(
       MihrabLiveActivityModule.PREFS_NAME, Context.MODE_PRIVATE,

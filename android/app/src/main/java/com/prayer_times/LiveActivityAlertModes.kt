@@ -144,6 +144,26 @@ object LiveActivityAlertModes {
   }
 
   /**
+   * Is this event sounding differently from what its row is set to?
+   *
+   * Not "is an override stored" — the standing setting can move under a
+   * stored one until the two agree, and an override that agrees with the
+   * row is not changing anything for the reader to be told about.
+   */
+  fun isOverridden(
+    prefs: SharedPreferences,
+    p: JSONObject,
+    epochMs: Long,
+    key: String,
+  ): Boolean {
+    val o = overrideFor(prefs, epochMs, key) ?: return false
+    val base = baseModeFor(p, key)
+    // With no base to compare against, a stored override is the only thing
+    // saying anything, so it counts.
+    return base.isEmpty() || o != coerce(key, base)
+  }
+
+  /**
    * Write the override for one instant — or clear it, when the cycle has
    * come back round to what the row was already set to.
    *
