@@ -7,12 +7,26 @@
  * row with a two-digit hour pushed its bell a digit to the left of the
  * other six, and a column of controls read as a ragged edge.
  *
- * The fix is a sizing sample — the widest time on the card, rendered
+ * The fix is a sizing sample — the longest time on the card, rendered
  * invisibly on every row — with the real time laid over it at the
  * trailing edge. What is pinned here is that the column is the same width
  * on every row of a card, that the chosen dot's slot is held whether or
  * not the dot is drawn, and that the sample never reaches a screen
  * reader.
+ *
+ * ── AND THEN LONGEST STOPPED MEANING WIDEST (issue #26) ───────────────
+ *
+ * The card picks the sample by string LENGTH, which is a stand-in for
+ * width only while the numerals are tabular. `tabular-nums` is a request
+ * to the font, and Android lets people choose a system font that ships no
+ * `tnum` table. On a handwriting font the column was sized by "00:46" and
+ * had to hold "02:23" — wider in that face — so the clock wrapped mid-value
+ * onto a second line, on those rows only. Reported with a screenshot,
+ * 2026-09-06.
+ *
+ * So a row now uses the sample only when it is genuinely longer than the
+ * row's own time, and neither text may wrap. The last three tests hold
+ * that.
  */
 import * as React from 'react';
 import { act } from 'react';
@@ -91,9 +105,7 @@ describe('the time column is the card’s width, not the row’s', () => {
   it('sizes every row with the same sample, whatever that row shows', () => {
     for (const rawTime of ['05:36', '23:09', '13:34']) {
       const tree = renderRow({ rawTime });
-      const sample = texts(tree).find(
-        n => flat(n.props.style).opacity === 0,
-      );
+      const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
       expect(sample).toBeDefined();
       expect(sample!.props.children).toBe(SAMPLE);
     }
@@ -121,7 +133,9 @@ describe('the time column is the card’s width, not the row’s', () => {
   it('lays the real time on the trailing edge, not the right one', () => {
     // `end`, so Arabic and Urdu flush it left without a second rule.
     const tree = renderRow();
-    const real = texts(tree).find(n => flat(n.props.style).position === 'absolute');
+    const real = texts(tree).find(
+      n => flat(n.props.style).position === 'absolute',
+    );
     expect(real).toBeDefined();
     expect(flat(real!.props.style).end).toBe(0);
     expect(flat(real!.props.style)).not.toHaveProperty('right');
@@ -133,7 +147,9 @@ describe('the time column is the card’s width, not the row’s', () => {
     // weight could be narrower than the text laid over it.
     const tree = renderRow({ isNext: true });
     const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
-    const real = texts(tree).find(n => flat(n.props.style).position === 'absolute');
+    const real = texts(tree).find(
+      n => flat(n.props.style).position === 'absolute',
+    );
     expect(flat(sample!.props.style).fontWeight).toBe('700');
     expect(flat(real!.props.style).fontWeight).toBe('700');
   });
@@ -142,9 +158,40 @@ describe('the time column is the card’s width, not the row’s', () => {
     const tree = renderRow();
     const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
     expect(sample!.props.accessible).toBe(false);
-    expect(sample!.props.importantForAccessibility).toBe(
-      'no-hide-descendants',
+    expect(sample!.props.importantForAccessibility).toBe('no-hide-descendants');
+  });
+
+  // ── issue #26 ──────────────────────────────────────────────────────
+
+  it('sizes to its own time when the sample is no longer than it', () => {
+    // "10:23 PM" and "11:09 PM" are the same LENGTH and, in a font with
+    // no tnum table, not the same width. Sizing this row by the sample
+    // is what pushed the real time onto a second line, so at equal
+    // length the row measures what it is actually going to draw.
+    const tree = renderRow({ rawTime: '22:23' });
+    const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
+    expect(sample!.props.children).toBe('10:23 PM');
+    expect(sample!.props.children).not.toBe(SAMPLE);
+  });
+
+  it('still defers to the sample when the sample really is longer', () => {
+    // The original defect must not come back: at unequal lengths the
+    // card's sample is the one that decides, so the bells stay in line.
+    const tree = renderRow({ rawTime: '05:36' });
+    const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
+    expect(sample!.props.children).toBe(SAMPLE);
+  });
+
+  it('never lets a clock wrap onto a second line', () => {
+    // The backstop. Whatever the font does with the request for tabular
+    // figures, a prayer time is one line or it is wrong.
+    const tree = renderRow({ rawTime: '22:23' });
+    const sample = texts(tree).find(n => flat(n.props.style).opacity === 0);
+    const real = texts(tree).find(
+      n => flat(n.props.style).position === 'absolute',
     );
+    expect(sample!.props.numberOfLines).toBe(1);
+    expect(real!.props.numberOfLines).toBe(1);
   });
 
   it('holds the chosen dot’s slot on a row that has no dot', () => {

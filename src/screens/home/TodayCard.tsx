@@ -538,9 +538,12 @@ function TodayCardImpl({
    * The longest time on this card, which sizes the time column on all of
    * its rows — see `timeSample` in PrayerRow.
    *
-   * Length is the right comparison because the numerals are tabular: two
-   * times in the same locale and the same clock format differ only in
-   * how many equal-width digits they carry.
+   * Length is the comparison because two times in the same locale and
+   * clock format differ only in how many digits they carry — but that
+   * stands in for WIDTH only while the numerals really are tabular, and
+   * `fontVariant: ['tabular-nums']` is a request a font is free to
+   * ignore. A row therefore falls back to its own time when this sample
+   * is no longer than it (issue #26, and the long note in PrayerRow).
    */
   const timeSample = useMemo(
     () =>

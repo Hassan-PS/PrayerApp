@@ -82,7 +82,7 @@ type PrayerRowProps = {
   standingAlertMode?: PrayerAlertMode;
   onResetAlertMode?: () => void;
   /**
-   * The widest time on this card, which sizes the time column on EVERY
+   * The longest time on this card, which sizes the time column on EVERY
    * row of it.
    *
    * Without it the column is as wide as its own time, and the control
@@ -90,6 +90,29 @@ type PrayerRowProps = {
    * digit wider than "5:36 AM", so one row's bell sat a digit to the left
    * of the other six. The card knows all the times, so it picks the
    * longest and hands the same string to every row.
+   *
+   * ── LONGEST IS NOT ALWAYS WIDEST ──────────────────────────────────
+   *
+   * The card compares string LENGTHS, which stands in for width only
+   * while the numerals are tabular. `tabularNumeralStyle` asks for that,
+   * but `fontVariant: ['tabular-nums']` is a request to the font, not a
+   * guarantee: Android lets people choose a system font, and a
+   * decorative one often ships no `tnum` table. The request then does
+   * nothing, digits go back to their natural widths, and two times of
+   * equal length no longer render equally wide.
+   *
+   * That is issue #26. On a handwriting system font the column was sized
+   * by "00:46" and had to hold "02:23", which is wider in that face — so
+   * the clock wrapped onto a second line mid-value ("02:2" / "3"), and
+   * only on the rows whose digits happened to be the wide ones.
+   *
+   * So the sample is used only when it is genuinely longer than this
+   * row's own time. At equal length the row sizes to its own time, which
+   * is correct in any font. With tabular numerals every row's own time is
+   * the same width and the column stays aligned exactly as before; with a
+   * font that ignores the request, a row may sit a few pixels out of line
+   * with its neighbours — which is the right thing to lose, because the
+   * alternative is a prayer time broken across two lines.
    */
   timeSample?: string;
 };
@@ -114,6 +137,11 @@ function PrayerRowImpl({
   const { t } = useTranslation();
   const { palette } = useAppPalette();
   const clock = useClockFormatter();
+
+  const shown = clock(rawTime);
+  // The card's sample only when it really is longer — see `timeSample`.
+  const sizingTime =
+    timeSample && timeSample.length > shown.length ? timeSample : shown;
 
   const Row = onSelect ? Pressable : View;
   const interactive = onSelect
@@ -218,16 +246,18 @@ function PrayerRowImpl({
         />
         <View style={styles.timeCol}>
           {/* Invisible, and hidden from screen readers: it is here only
-              to give the column a width, and it carries the widest time
-              on the card at the heaviest weight the column ever uses, so
-              the real time below can never outgrow it. */}
+              to give the column a width. It carries this row's own time,
+              or the card's sample when that is longer, at the heaviest
+              weight the column ever uses — so the real time below can
+              never outgrow it whatever the font does with `tnum`. */}
           <Text
             aria-hidden
             accessible={false}
             importantForAccessibility="no-hide-descendants"
             style={[styles.time, tabularNumeralStyle, styles.timeSample]}
+            numberOfLines={1}
             maxFontSizeMultiplier={TABULAR_MAX_FONT_SCALE}>
-            {timeSample ?? clock(rawTime)}
+            {sizingTime}
           </Text>
           <Text
             style={[
@@ -243,8 +273,9 @@ function PrayerRowImpl({
                 fontWeight: isNext ? '700' : '500',
               },
             ]}
+            numberOfLines={1}
             maxFontSizeMultiplier={TABULAR_MAX_FONT_SCALE}>
-            {clock(rawTime)}
+            {shown}
           </Text>
         </View>
       </View>
