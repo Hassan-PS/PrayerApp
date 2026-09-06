@@ -59,6 +59,7 @@
     <string name="widget_name_reading">Mihrab · Okumaya devam et</string>
     <string name="widget_description_reading">Kaldığınız yer ve bugünün vird miktarı. 4×1, yeniden boyutlandırılabilir.</string>
     <string name="widget_reading_continue">DEVAM ET</string>
+    <string name="widget_reading_play">Buradan oynat</string>
     <string name="widget_reading_khatmah_day">HATİM · GÜN %1$d/%2$d</string>
     <string name="widget_reading_position">Sayfa %1$d · Cüz %2$d</string>
     <string name="widget_reading_progress">%2$d üzerinden %1$d · %3$d%% okundu</string>

@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · पढ़ना जारी रखें";
 "widget_description_reading" = "जहाँ आपने छोड़ा था, और आज के ख़त्म हिस्से में क्या है। 4×1, आकार बदलने योग्य।";
 "widget_reading_continue" = "जारी रखें";
+"widget_reading_play" = "यहाँ से चलाएँ";
 "widget_reading_khatmah_day" = "ख़त्म · दिन %1$d/%2$d";
 "widget_reading_position" = "पृष्ठ %1$d · पारा %2$d";
 "widget_reading_progress" = "%2$d में से %1$d · %3$d%% पढ़ा गया";

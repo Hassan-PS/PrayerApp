@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The play triangle on the Continue Reading widget (issue #25).
+
+  A vector rather than a glyph in a TextView: "▶" is one text-presentation
+  selector away from rendering as a colour emoji, which on a widget that
+  recolours itself to the user's accent would be the one element that
+  refused to follow. RemoteViews has drawn vectors since API 24, which is
+  this app's minimum.
+
+  Left white and tinted at runtime with setColorFilter, the same way
+  WidgetCard paints the card behind it.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24"
+    android:tint="#FFFFFF">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M8,5.14V19.14L19,12.14L8,5.14Z" />
+</vector>

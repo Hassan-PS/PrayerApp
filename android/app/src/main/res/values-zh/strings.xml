@@ -56,6 +56,7 @@
     <string name="widget_name_reading">Mihrab · 继续阅读</string>
     <string name="widget_description_reading">显示您上次阅读到的位置，以及今日通读计划的诵读任务。4×1，可调整大小。</string>
     <string name="widget_reading_continue">继续</string>
+    <string name="widget_reading_play">从这里播放</string>
     <string name="widget_reading_khatmah_day">通读 · %1$d/%2$d 天</string>
     <string name="widget_reading_position">第 %1$d 页 · 第 %2$d 卷</string>
     <string name="widget_reading_progress">%1$d/%2$d · 已读 %3$d%%</string>

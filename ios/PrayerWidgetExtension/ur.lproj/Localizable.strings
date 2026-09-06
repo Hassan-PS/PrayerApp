@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · پڑھنا جاری رکھیں";
 "widget_description_reading" = "جہاں آپ نے چھوڑا تھا، اور آج کے ختم کا حصہ کیا مانگتا ہے۔ 4×1، سائز تبدیل کرنے کے قابل۔";
 "widget_reading_continue" = "جاری رکھیں";
+"widget_reading_play" = "یہاں سے چلائیں";
 "widget_reading_khatmah_day" = "ختم · دن %1$d/%2$d";
 "widget_reading_position" = "صفحہ %1$d · پارہ %2$d";
 "widget_reading_progress" = "%2$d میں سے %1$d · %3$d%% پڑھا گیا";

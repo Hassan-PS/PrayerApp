@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · Lanjutkan membaca";
 "widget_description_reading" = "Tempat terakhir Anda berhenti, dan porsi khatam hari ini. 4×1, dapat diubah ukuran.";
 "widget_reading_continue" = "LANJUTKAN";
+"widget_reading_play" = "Putar dari sini";
 "widget_reading_khatmah_day" = "KHATAM · HARI %1$d/%2$d";
 "widget_reading_position" = "Halaman %1$d · Juz %2$d";
 "widget_reading_progress" = "%1$d dari %2$d · %3$d%% dibaca";

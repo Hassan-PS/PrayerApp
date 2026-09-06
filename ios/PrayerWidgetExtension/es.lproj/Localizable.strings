@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · Seguir leyendo";
 "widget_description_reading" = "Dónde lo dejaste y qué pide la porción del khatmah de hoy. 4×1, redimensionable.";
 "widget_reading_continue" = "CONTINUAR";
+"widget_reading_play" = "Reproducir desde aquí";
 "widget_reading_khatmah_day" = "KHATMAH · DÍA %1$d/%2$d";
 "widget_reading_position" = "Página %1$d · Juz %2$d";
 "widget_reading_progress" = "%1$d de %2$d · %3$d%% leído";

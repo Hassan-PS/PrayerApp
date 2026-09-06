@@ -57,6 +57,42 @@ describe('mihrab:// route table', () => {
     });
   });
 
+  // ── issue #25 ──────────────────────────────────────────────────────
+
+  it('carries a play position alongside the page, not instead of it', () => {
+    // The muṣḥaf still has to open on its page. `playFromAyah` says what
+    // to recite, which is a different question from what to draw.
+    expect(params('mihrab://read/2?initialPage=3&playFromAyah=5')).toMatchObject(
+      { surahNumber: 2, initialPage: 3, playFromAyah: 5 },
+    );
+  });
+
+  it('carries it alongside the ayah in the translation reader too', () => {
+    expect(
+      params('mihrab://read/7?scrollToAyah=22&playFromAyah=22'),
+    ).toMatchObject({ surahNumber: 7, scrollToAyah: 22, playFromAyah: 22 });
+  });
+
+  it('leaves a plain read link silent', () => {
+    // Every link that existed before this one still opens a page and says
+    // nothing. Silence is what a tap has always meant.
+    expect(params('mihrab://read/2?initialPage=3')).not.toHaveProperty(
+      'playFromAyah',
+    );
+  });
+
+  it('refuses a play position that is not an ayah', () => {
+    // Same guard as every other number in this table: zero is not an
+    // ayah, and neither is "abc". A forged link should open a page, not
+    // reach the audio queue with a nonsense index.
+    for (const bad of ['0', '-3', 'abc', '']) {
+      expect(
+        params(`mihrab://read/2?initialPage=3&playFromAyah=${bad}`)
+          .playFromAyah,
+      ).toBeUndefined();
+    }
+  });
+
   it('opens a surah at an ayah in the translation reader', () => {
     expect(params('mihrab://read/4?scrollToAyah=12')).toMatchObject({
       surahNumber: 4,

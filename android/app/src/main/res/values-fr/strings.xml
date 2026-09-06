@@ -76,6 +76,7 @@
     <string name="widget_name_reading">Mihrab · Continuer la lecture</string>
     <string name="widget_description_reading">Où vous en étiez, et ce que demande la portion du khatmah d\'aujourd\'hui. 4×1, redimensionnable.</string>
     <string name="widget_reading_continue">CONTINUER</string>
+    <string name="widget_reading_play">Lire à partir d\'ici</string>
     <string name="widget_reading_khatmah_day">KHATMAH · JOUR %1$d/%2$d</string>
     <string name="widget_reading_position">Page %1$d · Juz %2$d</string>
     <string name="widget_reading_progress">%1$d sur %2$d · %3$d%% lu</string>

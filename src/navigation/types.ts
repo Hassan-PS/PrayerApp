@@ -23,6 +23,21 @@ export type RootStackParamList = {
     initialPage?: number;
     /** Translation mode: scroll to this ayah (search / bookmark deep links). */
     scrollToAyah?: number;
+    /**
+     * Start reciting from this ayah on arrival — issue #25.
+     *
+     * An ayah rather than a flag, because the two params above are a
+     * reader-mode fork and this is not: the muṣḥaf is opened by page and
+     * the translation reader by ayah, but recitation always begins at an
+     * ayah whichever of them is on screen. One param answers for both,
+     * and it carries its own position rather than depending on which
+     * fork happened to be taken.
+     *
+     * Only the widget sends it. Opening the reader from inside the app
+     * leaves it undefined, and silence stays the default everywhere it
+     * already was.
+     */
+    playFromAyah?: number;
   };
   /** Manage downloads: mushaf pages, recitation audio, tafsir cache. */
   QuranDownloads: undefined;

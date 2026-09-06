@@ -32,6 +32,7 @@
 "widget_name_reading" = "محراب · متابعة القراءة";
 "widget_description_reading" = "من حيث توقفت، ومقدار وِرد الختمة لليوم. 4×1، قابل لتغيير الحجم.";
 "widget_reading_continue" = "متابعة";
+"widget_reading_play" = "التشغيل من هنا";
 "widget_reading_khatmah_day" = "الختمة · اليوم %1$d/%2$d";
 "widget_reading_position" = "صفحة %1$d · جزء %2$d";
 "widget_reading_progress" = "%1$d من %2$d · %3$d%% مقروءة";

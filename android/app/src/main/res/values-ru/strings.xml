@@ -70,6 +70,7 @@
     <string name="widget_name_reading">Mihrab · Продолжить чтение</string>
     <string name="widget_description_reading">Где вы остановились и какой отрывок хатма назначен на сегодня. 4×1, изменяемый размер.</string>
     <string name="widget_reading_continue">ПРОДОЛЖИТЬ</string>
+    <string name="widget_reading_play">Воспроизвести отсюда</string>
     <string name="widget_reading_khatmah_day">ХАТМ · ДЕНЬ %1$d/%2$d</string>
     <string name="widget_reading_position">Стр. %1$d · Джуз %2$d</string>
     <string name="widget_reading_progress">%1$d из %2$d · %3$d%% прочитано</string>

@@ -64,6 +64,7 @@
     <string name="widget_name_reading">Mihrab · Weiterlesen</string>
     <string name="widget_description_reading">Wo du aufgehört hast, und was das heutige Khatmah-Pensum vorsieht. 4×1, skalierbar.</string>
     <string name="widget_reading_continue">WEITER</string>
+    <string name="widget_reading_play">Ab hier abspielen</string>
     <string name="widget_reading_khatmah_day">KHATMAH · TAG %1$d/%2$d</string>
     <string name="widget_reading_position">Seite %1$d · Juz %2$d</string>
     <string name="widget_reading_progress">%1$d von %2$d · %3$d%% gelesen</string>

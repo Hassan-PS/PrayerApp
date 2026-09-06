@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · পড়া চালিয়ে যান";
 "widget_description_reading" = "আপনি যেখানে থেমেছিলেন, এবং আজকের খতমের অংশ কী চায়। 4×1, আকার পরিবর্তনযোগ্য।";
 "widget_reading_continue" = "চালিয়ে যান";
+"widget_reading_play" = "এখান থেকে চালান";
 "widget_reading_khatmah_day" = "খতম · দিন %1$d/%2$d";
 "widget_reading_position" = "পৃষ্ঠা %1$d · পারা %2$d";
 "widget_reading_progress" = "%2$d-এর মধ্যে %1$d · %3$d%% পড়া হয়েছে";

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The disc behind the play triangle.
+
+  A tinted fill rather than a solid accent block, for the reason the
+  tasbih widget's +1 button gives: the widget sits on an unknown
+  wallpaper, where a saturated slab fights everything around it and a
+  tint still reads as a button.
+
+  Fully round — 20dp of radius on a 40dp box — because it is a media
+  control and every other one the reader meets is round.
+-->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <corners android:radius="20dp" />
+    <solid android:color="#2E6BC98A" />
+    <stroke android:width="1dp" android:color="#736BC98A" />
+</shape>

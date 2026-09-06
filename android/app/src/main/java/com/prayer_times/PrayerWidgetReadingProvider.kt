@@ -23,6 +23,15 @@ import org.json.JSONObject
  * ~180 MB mushaf is actually on disk — see buildReadingBlock. A widget that
  * promised "carry on from page 3" and delivered a download prompt would be
  * worse than one that opened the wrong reader.
+ *
+ * ── TWO INTENTS, NOT ONE (issue #25) ─────────────────────────────────
+ *
+ * Resuming with recitation meant opening the bookmark, finding the reciter
+ * and pressing play — three steps for the thing people do most days. The
+ * card's own tap still opens the page in silence, because that is what most
+ * taps mean and turning all of them into sound would surprise everyone who
+ * reads without it. The play disc beside the surah name is the other
+ * intent, and it is the only one that sends `playFromAyah`.
  */
 class PrayerWidgetReadingProvider : AppWidgetProvider() {
 
@@ -122,6 +131,9 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
           R.id.widget_placeholder,
           context.getString(R.string.widget_placeholder_open_app),
         )
+        // Nothing on the card is a position, so there is nothing to
+        // recite from.
+        views.setViewVisibility(R.id.reading_play, View.GONE)
         views.setOnClickPendingIntent(R.id.widget_root, openQuranIntent(context))
         return views
       }
@@ -175,6 +187,10 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
           R.id.reading_side_note,
           context.getString(R.string.widget_reading_start_side_note),
         )
+        // "Continue from where you left off" is not on offer to someone
+        // who has not left off anywhere. A play button here would recite
+        // Al-Fatiha at a reader who asked for nothing.
+        views.setViewVisibility(R.id.reading_play, View.GONE)
         views.setOnClickPendingIntent(R.id.widget_root, openQuranIntent(context))
         return views
       }
@@ -299,6 +315,17 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
       }
 
       views.setOnClickPendingIntent(R.id.widget_root, readingIntent(context, r))
+
+      // The one control on this card. Tinted with the same accent the rest
+      // of the widget answers to, so it belongs to the card rather than
+      // sitting on it.
+      views.setViewVisibility(R.id.reading_play, View.VISIBLE)
+      views.setInt(R.id.reading_play, "setColorFilter", accent)
+      views.setContentDescription(
+        R.id.reading_play,
+        context.getString(R.string.widget_reading_play),
+      )
+      views.setOnClickPendingIntent(R.id.reading_play, playIntent(context, r))
       return views
     }
 
@@ -350,6 +377,44 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
       return PendingIntent.getActivity(
         context,
         3200,
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+      )
+    }
+
+    /**
+     * The same destination, arriving out loud — issue #25.
+     *
+     * `playFromAyah` rides ALONGSIDE the position above rather than
+     * replacing it: the muṣḥaf still has to open on its page and the
+     * translation reader on its ayah, and recitation begins at an ayah
+     * either way. So the ayah is sent every time, whichever reader the
+     * app resolved, and the reader that does not need it ignores it.
+     *
+     * Its own request code. Two PendingIntents that differ only in their
+     * data are already distinct to the system, but a shared code makes
+     * that a fact about the URI rather than about the intent, and the
+     * next person to edit one of these URIs should not have to know
+     * that.
+     */
+    private fun playIntent(context: Context, r: JSONObject): PendingIntent {
+      val surah = r.optInt("surah", 1)
+      val ayah = r.optInt("ayah", 1)
+      val position = if (r.optString("mode") == "mushaf") {
+        "initialPage=${r.optInt("page", 1)}"
+      } else {
+        "scrollToAyah=$ayah"
+      }
+      val intent = Intent(
+        Intent.ACTION_VIEW,
+        Uri.parse("mihrab://read/$surah?$position&playFromAyah=$ayah"),
+      ).apply {
+        setPackage(context.packageName)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+      return PendingIntent.getActivity(
+        context,
+        3202,
         intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
       )

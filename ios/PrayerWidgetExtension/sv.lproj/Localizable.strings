@@ -32,6 +32,7 @@
 "widget_name_reading" = "Mihrab · Fortsätt läsa";
 "widget_description_reading" = "Var du slutade, och vad dagens khatma-portion kräver. 4×1, storleken kan ändras.";
 "widget_reading_continue" = "FORTSÄTT";
+"widget_reading_play" = "Spela upp härifrån";
 "widget_reading_khatmah_day" = "KHATMA · DAG %1$d/%2$d";
 "widget_reading_position" = "Sida %1$d · Juz %2$d";
 "widget_reading_progress" = "%1$d av %2$d · %3$d%% läst";

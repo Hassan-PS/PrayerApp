@@ -12,7 +12,7 @@
  * muṣḥaf concern was a branch inside something the translation reader also
  * ran, and each platform edge case landed here as another one.
  */
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useRoute } from '@react-navigation/native';
 import type { RouteProp } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
@@ -23,6 +23,7 @@ import { useAndroidSubScreenBack } from '../navigation/useAndroidSubScreenBack';
 import { findSurah } from '../quran/quran';
 import { hydrateRiwayahData } from '../quran/riwayahData';
 import { hydrateQuranState } from '../quran/quranState';
+import { playFromAyah as startReciting } from '../quran/audio/playback';
 import { usePrayerSettings } from '../context/PrayerSettingsContext';
 import type { RootStackParamList } from '../navigation/types';
 import { MushafSurahScreen } from './quran/MushafSurahScreen';
@@ -34,7 +35,7 @@ export function QuranSurahScreen() {
   const { palette } = useAppPalette();
   const { settings, updateSettings } = usePrayerSettings();
   const route = useRoute<RouteProp<RootStackParamList, 'QuranSurah'>>();
-  const { surahNumber, initialPage, scrollToAyah } = route.params;
+  const { surahNumber, initialPage, scrollToAyah, playFromAyah } = route.params;
   useAndroidSubScreenBack();
 
   const surah = findSurah(surahNumber);
@@ -46,6 +47,42 @@ export function QuranSurahScreen() {
     // know what this device has before the first page is drawn.
     void hydrateRiwayahData();
   }, []);
+
+  /**
+   * Arriving with recitation asked for — issue #25.
+   *
+   * The reporter's ask was to resume reading and listening in one tap
+   * instead of opening the bookmark, finding the reciter and pressing
+   * play. The widget's play control sends `playFromAyah`, and this is
+   * where it becomes sound.
+   *
+   * Here rather than in either reader, because it is true of both: the
+   * muṣḥaf and the translation screen open on different things and
+   * recite the same one.
+   *
+   * ── ONCE, AND ONLY WHEN ASKED ─────────────────────────────────────
+   *
+   * Params outlive a render. Without the ref, every re-render of this
+   * screen — a theme change, a rotation, a settings write — would start
+   * the queue again from the top, which for a listener is the surah
+   * jumping back to where they came in. The ref remembers the exact
+   * request it has already honoured, so a second tap on the SAME
+   * position is also a no-op: it is already playing, and restarting it
+   * is not what the tap meant.
+   *
+   * Fire and forget: recitation must never be able to hold up the page.
+   * `playFromAyah` already answers quietly for a surah it cannot find,
+   * and a network that will not give up an ayah is the audio layer's
+   * problem to report, not a reason to leave the reader blank.
+   */
+  const recited = useRef<string | null>(null);
+  useEffect(() => {
+    if (!playFromAyah) return;
+    const request = `${surahNumber}:${playFromAyah}`;
+    if (recited.current === request) return;
+    recited.current = request;
+    void startReciting(surahNumber, playFromAyah).catch(() => undefined);
+  }, [surahNumber, playFromAyah]);
 
   const isMushaf = settings.quranReadingMode === 'mushaf';
   const toggleMode = useCallback(() => {

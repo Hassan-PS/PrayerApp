@@ -194,11 +194,44 @@ struct ReadingEntryView: View {
             .foregroundStyle(widgetMuted)
             .lineLimit(1)
           Spacer(minLength: 4)
-          Text(r.surahName)
-            .font(.system(size: 22, weight: .bold))
-            .foregroundStyle(widgetText)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
+          // The surah, and the one control on this card — issue #25.
+          //
+          // MEDIUM ONLY, and not by choice. A widget gets one tap target
+          // unless a `Link` carves out another, and `Link` is honoured on
+          // systemMedium and systemLarge alone: on systemSmall and on both
+          // accessory families the system routes every tap to `widgetURL`,
+          // so a play button drawn there would silently open the reader
+          // instead of playing. A control that does the wrong thing is
+          // worse than one that is not offered, so the small and lock
+          // screen cards stay a single tap that opens the page, and
+          // Android — whose RemoteViews take a click per view — carries it
+          // at every size.
+          HStack(alignment: .center, spacing: 8) {
+            Text(r.surahName)
+              .font(.system(size: 22, weight: .bold))
+              .foregroundStyle(widgetText)
+              .lineLimit(1)
+              .minimumScaleFactor(0.6)
+              .frame(maxWidth: .infinity, alignment: .leading)
+            if let play = playURL(r) {
+              Link(destination: play) {
+                Image(systemName: "play.fill")
+                  .font(.system(size: 12, weight: .bold))
+                  .foregroundStyle(resolvedWidgetHighlightColor())
+                  .frame(width: 32, height: 32)
+                  .background(
+                    Circle().fill(resolvedWidgetHighlightColor().opacity(0.18))
+                  )
+                  .overlay(
+                    Circle().stroke(
+                      resolvedWidgetHighlightColor().opacity(0.45),
+                      lineWidth: 1
+                    )
+                  )
+              }
+              .accessibilityLabel(Text(verbatim: widgetString("widget_reading_play")))
+            }
+          }
           Text(verbatim: widgetString("widget_reading_position", r.page, r.juz))
             .font(.system(size: 12))
             .foregroundStyle(widgetMuted)
@@ -421,6 +454,17 @@ struct ReadingEntryView: View {
   private func readingURL(_ r: WidgetPayload.Reading) -> URL? {
     let position = r.mode == "mushaf" ? "initialPage=\(r.page)" : "scrollToAyah=\(r.ayah)"
     return URL(string: "mihrab://read/\(r.surah)?\(position)")
+  }
+
+  /// The same destination, arriving out loud — issue #25.
+  ///
+  /// `playFromAyah` rides alongside the position above rather than
+  /// replacing it: the muṣḥaf still opens on its page and the translation
+  /// reader on its ayah, and recitation begins at an ayah either way. So
+  /// the ayah goes every time, whichever reader the app resolved.
+  private func playURL(_ r: WidgetPayload.Reading) -> URL? {
+    let position = r.mode == "mushaf" ? "initialPage=\(r.page)" : "scrollToAyah=\(r.ayah)"
+    return URL(string: "mihrab://read/\(r.surah)?\(position)&playFromAyah=\(r.ayah)")
   }
 
   /// The same amber the Log screen marks a slipping plan with.

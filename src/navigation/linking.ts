@@ -50,6 +50,11 @@ export const linking: LinkingOptions<RootStackParamList> = {
        * screen already decides between them from what it is given — which is
        * why the widget sends whichever the user last had open rather than
        * this table trying to pick.
+       *
+       * `playFromAyah` is neither: it says begin reciting here, and it is
+       * sent alongside whichever of the two positions the reader needs
+       * (issue #25). A link without it opens silently, as every link did
+       * before it existed.
        */
       QuranSurah: {
         path: 'read/:surahNumber',
@@ -57,6 +62,7 @@ export const linking: LinkingOptions<RootStackParamList> = {
           surahNumber: positiveInt as (v: string) => number,
           initialPage: positiveInt as (v: string) => number,
           scrollToAyah: positiveInt as (v: string) => number,
+          playFromAyah: positiveInt as (v: string) => number,
         },
       },
       /**

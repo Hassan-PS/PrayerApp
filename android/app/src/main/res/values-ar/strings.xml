@@ -74,6 +74,7 @@
     <string name="widget_name_reading">محراب · متابعة القراءة</string>
     <string name="widget_description_reading">من حيث توقفت، ومقدار وِرد الختمة لليوم. 4×1، قابل لتغيير الحجم.</string>
     <string name="widget_reading_continue">متابعة</string>
+    <string name="widget_reading_play">التشغيل من هنا</string>
     <string name="widget_reading_khatmah_day">الختمة · اليوم %1$d/%2$d</string>
     <string name="widget_reading_position">صفحة %1$d · جزء %2$d</string>
     <string name="widget_reading_progress">%1$d من %2$d · %3$d%% مقروءة</string>
