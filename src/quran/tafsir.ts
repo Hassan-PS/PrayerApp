@@ -13,6 +13,8 @@
  * Auto Backup and cleaned by the Manage-downloads screen).
  */
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { CONTENT_DEADLINES } from './contentNetwork';
 import { mkdirDeep } from './mushafDownload';
 
 export type TafsirEdition = {
@@ -136,7 +138,19 @@ export async function loadTafsir(
     /* fall through to network */
   }
   try {
-    const res = await fetch(tafsirUrl(edition, surah, ayah));
+    // Two attempts, not four: a reader is looking at an open sheet, so a
+    // CDN's transient 502 is worth exactly one more try and no more. The
+    // deadline is what matters most here — before this, a stalled origin
+    // left the sheet's spinner running with nothing to end it.
+    const res = await fetchWithRetry(
+      tafsirUrl(edition, surah, ayah),
+      undefined,
+      {
+        maxAttempts: 2,
+        baseDelayMs: 400,
+        timeoutMs: CONTENT_DEADLINES.tafsir,
+      },
+    );
     if (!res.ok) return null;
     const parsed = (await res.json()) as { text?: string };
     const text = parsed.text?.trim();

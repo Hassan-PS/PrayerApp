@@ -10,6 +10,8 @@
  *     The previous policy let 502/504 fail immediately, even though they're
  *     classic transient gateway errors.
  *   • Network errors (TypeError "Network request failed") are retried.
+ *   • A caller-supplied signal that has aborted stops the loop immediately —
+ *     a cancel is not a transient failure.
  *   • Honors Retry-After when present (seconds only).
  *   • Backoff has ±20% jitter so concurrent retries don't synchronise into
  *     thundering-herd surges.
@@ -135,6 +137,13 @@ export async function fetchWithRetry(
     } else {
       // Exception path (network error or timeout). Retry unless out of attempts.
       if (isLastAttempt) {
+        throw attemptError;
+      }
+      // A caller who cancelled is not asking us to try harder. Without this,
+      // an aborted signal burned the remaining attempts — each one failing
+      // instantly, each one still sleeping out its backoff first — so a
+      // cancel took seconds to surface as one.
+      if (init?.signal?.aborted) {
         throw attemptError;
       }
     }

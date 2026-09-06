@@ -29,6 +29,8 @@
  * the publisher's, or one the reader supplies, and the file travels from
  * them to the reader without passing through anything of ours.
  */
+import { fetchWithRetry } from '../utils/fetchWithRetry';
+import { CONTENT_DEADLINES } from './contentNetwork';
 import { MUSHAF_PAGES, MUSHAF_SURAHS } from './pages';
 import { installRiwayahDataset } from './riwayahData';
 import { verifyRiwayahDataset } from './riwayahImport';
@@ -97,7 +99,14 @@ export async function installRiwayahFromUrl(
 
   let body: string;
   try {
-    const response = await fetch(trimmed, { signal });
+    // A deadline of its own. The caller's signal only covers a reader who
+    // presses cancel; a host that accepts the connection and then says
+    // nothing left the sheet spinning until they thought to.
+    const response = await fetchWithRetry(
+      trimmed,
+      { signal },
+      { timeoutMs: CONTENT_DEADLINES.riwayah },
+    );
     if (!response.ok) {
       return fail(
         'quran.riwayahServerSaidNo',
@@ -113,8 +122,12 @@ export async function installRiwayahFromUrl(
       );
     }
     body = await response.text();
-  } catch (e) {
-    if ((e as { name?: string })?.name === 'AbortError') {
+  } catch {
+    // A timeout aborts too, so the error's name alone no longer says which
+    // happened. The reader's own signal is the only thing that can tell
+    // "I pressed cancel" from "that host went quiet" — and telling someone
+    // they cancelled something they were waiting on is its own small lie.
+    if (signal?.aborted) {
       return fail('common.cancelled', 'Cancelled.');
     }
     return fail(

@@ -11,6 +11,11 @@
  * where the player would find it.
  */
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import {
+  CONTENT_DEADLINES,
+  fetchContentOnce,
+  withDownloadDeadline,
+} from '../contentNetwork';
 import { mkdirDeep } from '../mushafDownload';
 import { SURAHS } from '../quran';
 import {
@@ -103,7 +108,15 @@ const MIN_AUDIO_BYTES = 1000;
  * one write is not the problem it would be for a font.
  */
 async function fetchAyahViaRNFetch(url: string, dest: string): Promise<void> {
-  const response = await fetch(url);
+  // A deadline, because this is the path a broken network ROUTES TO. Once
+  // `streamingAudioWorks` is false every ayah comes through here, and an
+  // untimed fetch on a stalled connection never settles — the caller's
+  // retry loop below never gets its turn.
+  const response = await fetchContentOnce(
+    url,
+    undefined,
+    CONTENT_DEADLINES.ayahAudio,
+  );
   if (!response.ok) throw new Error(`ayah: HTTP ${response.status}`);
   const blob = await response.blob();
   const base64 = await new Promise<string>((resolve, reject) => {
@@ -179,23 +192,15 @@ async function fetchAyahFile(
         return;
       }
       // No RNBlobUtil `timeout` config — it breaks Android downloads
-      // outright; the JS watchdog below covers hangs.
-      const task = ReactNativeBlobUtil.config({
-        path: tmp,
-        overwrite: true,
-      }).fetch('GET', url);
-      let watchdog: ReturnType<typeof setTimeout> | null = null;
-      const res = await Promise.race([
-        task,
-        new Promise<never>((_, reject) => {
-          watchdog = setTimeout(() => {
-            task.cancel(() => undefined);
-            reject(new Error('audio fetch timed out'));
-          }, 60_000);
-        }),
-      ]).finally(() => {
-        if (watchdog != null) clearTimeout(watchdog);
-      });
+      // outright; `withDownloadDeadline` races it in JS instead.
+      const res = await withDownloadDeadline(
+        ReactNativeBlobUtil.config({ path: tmp, overwrite: true }).fetch(
+          'GET',
+          url,
+        ),
+        CONTENT_DEADLINES.ayahAudio,
+        'audio fetch',
+      );
       const stat = await ReactNativeBlobUtil.fs.stat(tmp).catch(() => null);
       if (
         res.info().status !== 200 ||
@@ -368,22 +373,14 @@ export async function prefetchAyahAudio(
     await mkdirDeep(audioDir(reciterId));
     const reciter = findReciter(reciterId);
     const tmp = `${path}.part`;
-    const task = ReactNativeBlobUtil.config({
-      path: tmp,
-      overwrite: true,
-    }).fetch('GET', ayahAudioUrl(reciter, surah, ayah));
-    let watchdog: ReturnType<typeof setTimeout> | null = null;
-    const res = await Promise.race([
-      task,
-      new Promise<never>((_, reject) => {
-        watchdog = setTimeout(() => {
-          task.cancel(() => undefined);
-          reject(new Error('prefetch timed out'));
-        }, 30_000);
-      }),
-    ]).finally(() => {
-      if (watchdog != null) clearTimeout(watchdog);
-    });
+    const res = await withDownloadDeadline(
+      ReactNativeBlobUtil.config({ path: tmp, overwrite: true }).fetch(
+        'GET',
+        ayahAudioUrl(reciter, surah, ayah),
+      ),
+      CONTENT_DEADLINES.ayahPrefetch,
+      'prefetch',
+    );
     const stat = await ReactNativeBlobUtil.fs.stat(tmp).catch(() => null);
     if (res.info().status !== 200 || !stat || Number(stat.size) <= 1000) {
       await ReactNativeBlobUtil.fs.unlink(tmp).catch(() => undefined);
@@ -552,7 +549,11 @@ const MIN_TIMINGS_BYTES = 10_000;
  * length of one parse is not the problem it would be for a font.
  */
 async function fetchTimingsViaRNFetch(url: string): Promise<string> {
-  const response = await fetch(url);
+  const response = await fetchContentOnce(
+    url,
+    undefined,
+    CONTENT_DEADLINES.timings,
+  );
   if (!response.ok) throw new Error(`timings: HTTP ${response.status}`);
   const text = await response.text();
   if (text.length < MIN_TIMINGS_BYTES) throw new Error('timings: truncated');
@@ -590,10 +591,16 @@ export async function loadReciterTimings(
     await mkdirDeep(timingsDir());
     // No `timeout` in the config: on Android it makes every download fail
     // instantly with "Download interrupted" (same note as the font store).
-    const res = await ReactNativeBlobUtil.config({
-      path: tmp,
-      overwrite: true,
-    }).fetch('GET', url);
+    // This one had no watchdog either, so a stalled origin hung the word
+    // highlight for the life of the session with nothing to fall back to.
+    const res = await withDownloadDeadline(
+      ReactNativeBlobUtil.config({ path: tmp, overwrite: true }).fetch(
+        'GET',
+        url,
+      ),
+      CONTENT_DEADLINES.timings,
+      'timings fetch',
+    );
     const stat = await ReactNativeBlobUtil.fs.stat(tmp).catch(() => null);
     if (res.info().status !== 200 || !stat) {
       throw new Error(`timings: HTTP ${res.info().status}`);

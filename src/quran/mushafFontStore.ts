@@ -16,6 +16,11 @@
  *   page never waits on the network.
  */
 import ReactNativeBlobUtil from 'react-native-blob-util';
+import {
+  CONTENT_DEADLINES,
+  fetchContentOnce,
+  withDownloadDeadline,
+} from './contentNetwork';
 import { MUSHAF_TOTAL_PAGES } from './mushafImages';
 import { mkdirDeep } from './mushafDownload';
 import { isValidFontFile } from '../native/MushafFont';
@@ -119,7 +124,15 @@ async function fileOk(path: string, page: number): Promise<boolean> {
  * page-image store learned this the hard way; fonts inherit the fix.
  */
 async function fetchFontViaRNFetch(page: number, dest: string): Promise<void> {
-  const response = await fetch(fontUrl(page));
+  // A deadline, because this is the path a broken network ROUTES TO: one
+  // streaming failure condemns that transport for the session, and from
+  // then on all 604 pages come through here. Untimed, a stalled proxy
+  // left the reader on a page that would never draw.
+  const response = await fetchContentOnce(
+    fontUrl(page),
+    undefined,
+    CONTENT_DEADLINES.pageFont,
+  );
   if (!response.ok) throw new Error(`font ${page}: HTTP ${response.status}`);
   const blob = await response.blob();
   const base64 = await new Promise<string>((resolve, reject) => {
@@ -212,11 +225,18 @@ export function ensurePageFontFile(page: number): Promise<string | null> {
             break;
           }
           // No `timeout` in the config: on Android it makes every download
-          // fail instantly with "Download interrupted".
-          const res = await ReactNativeBlobUtil.config({
-            path: tmp,
-            overwrite: true,
-          }).fetch('GET', fontUrl(page));
+          // fail instantly with "Download interrupted" — so the deadline is
+          // a JS race instead. Without one, a stalled connection never
+          // reached the `catch` that condemns the transport, and the page
+          // simply never arrived.
+          const res = await withDownloadDeadline(
+            ReactNativeBlobUtil.config({ path: tmp, overwrite: true }).fetch(
+              'GET',
+              fontUrl(page),
+            ),
+            CONTENT_DEADLINES.pageFont,
+            `font ${page}`,
+          );
           const status = res.info().status;
           const stat = await ReactNativeBlobUtil.fs.stat(tmp).catch(() => null);
           if (status !== 200 || !stat || Number(stat.size) < MIN_FONT_BYTES) {
