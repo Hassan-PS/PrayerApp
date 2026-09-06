@@ -1,0 +1,27 @@
+Mihrab garde les cinq prières quotidiennes à portée de main : un écran d'accueil calme avec la prochaine prière et un compte à rebours en direct, des rappels d'adhan facultatifs, un planning du mois complet et des widgets pour l'écran d'accueil.
+
+Fonctions principales :
+- Heures de prière pour aujourd'hui, la semaine à venir et un mois entier — partageables en image ou en PDF
+- Notifications facultatives pour les cinq prières, avec dix-sept enregistrements d'adhan ou le vôtre, un rappel avant l'heure et la répétition
+- Compte à rebours épinglé (Live Activity) sur l'écran de verrouillage et dans le volet des notifications, en trois présentations
+- Widgets d'écran d'accueil : heures de prière en trois tailles, le journal du jour, la date hégirienne, la série, le tasbih et la lecture
+- Boussole qibla avec force du signal et vérification par la position du soleil
+- Lecteur de Coran : le mushaf de Médine tracé à partir des polices de page officielles, en quatre riwayat (Hafs, Warsh, Qalun, Chuʿba), avec 13 traductions et des tafsirs classiques, 42 récitateurs, surlignage mot à mot, outils de mémorisation, signets et plans de khatma
+- Tilawa — l'écoute comme page à part entière : choisissez un récitateur et les sourates s'enchaînent écran éteint, depuis l'écran de verrouillage, avec minuterie d'arrêt, réglage de vitesse et une page de mushaf vivante où le mot récité s'allume
+- Invocations (Hisn al-Muslim), compteur de tasbih, suivi du jeûne, journal de prière avec graphique de pratique et séries, et mosquées à proximité
+- Calendrier hégirien mettant en avant le Ramadan, l'Aïd et le vendredi
+- Synchronisation entre vos propres appareils, sans compte et sans serveur : des fichiers scellés dans un dossier que vous synchronisez déjà
+- Sauvegarde et restauration vers un fichier que vous conservez
+- Position GPS, recherche de lieu, lieux enregistrés ou coordonnées manuelles ; décalage en minutes par prière
+- Plusieurs sources d'horaires — dont les tables nationales publiées pour la Suède et le Maroc — ou un calcul entièrement sur l'appareil
+- 13 langues, dont l'arabe et l'ourdou avec mise en page de droite à gauche
+- Thèmes clair, sombre, noir intégral et système, la couleur d'accent de votre choix et Material You
+
+Confidentialité et usage du réseau :
+- Aucune analyse, aucun traceur, aucune publicité, aucun compte
+- Les heures peuvent être calculées entièrement sur votre appareil une fois le lieu défini
+- Fonctions en ligne facultatives, utilisées seulement si vous les choisissez : fournisseurs d'horaires (AlAdhan, PrayTimes.dev ou les tables nationales préparées pour la Suède et le Maroc), recherche de lieu via OpenStreetMap Nominatim, et téléchargement des pages du Coran, des traductions, des tafsirs et des récitations
+- La synchronisation ne passe par aucun serveur nous appartenant, et ce qu'elle écrit est illisible pour tout sauf les appareils que vous avez appairés
+- Vos coordonnées ne sont conservées que sur votre appareil
+
+L'application est open source sous licence AGPL-3.0-or-later.

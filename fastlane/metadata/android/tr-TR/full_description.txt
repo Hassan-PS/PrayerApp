@@ -1,0 +1,27 @@
+Mihrab beş vakit namazı elinizin altında tutar: sıradaki namazı ve canlı geri sayımı gösteren sakin bir ana ekran, isteğe bağlı ezan hatırlatmaları, tam aylık bir takvim ve ana ekran widget'ları.
+
+Öne çıkan özellikler:
+- Bugünün, önümüzdeki haftanın ve tam bir ayın namaz vakitleri — görsel ya da PDF olarak paylaşılabilir
+- Beş vakit için isteğe bağlı bildirimler; on yedi ezan kaydı ya da kendi kaydınız, vakit öncesi hatırlatma ve erteleme
+- Kilit ekranında ve bildirim panelinde sabitlenen namaz geri sayımı (Live Activity), üç tasarımda
+- Ana ekran widget'ları: üç boyutta namaz vakitleri, günün kaydı, hicri tarih, seri, tesbih ve okuma
+- Sinyal gücünü gösteren ve güneşle karşılaştırma sunan kıble pusulası
+- Kuran okuyucu: resmî sayfa yazı tipleriyle çizilen Medine mushafı, dört rivayette (Hafs, Verş, Kalun, Şu'be), 13 meal ve klasik tefsirler, 42 kâri, kelime kelime vurgulama, ezber araçları, yer imleri ve hatim planları
+- Tilavet — dinlemenin kendi sayfası: bir kâri seçin, ekran kapalıyken ve kilit ekranından sure sure çalsın; uyku zamanlayıcısı, hız kontrolü ve okunan kelimenin yandığı canlı mushaf sayfasıyla
+- Dualar (Hısnü'l-Müslim), tesbih sayacı, oruç takibi, pratik grafiği ve serileriyle namaz günlüğü ve yakındaki camiler
+- Ramazan, bayram ve cuma vurgularıyla hicri takvim
+- Hesapsız ve sunucusuz, yalnızca kendi cihazlarınız arasında eşitleme: zaten eşitlediğiniz bir klasörde mühürlü dosyalar
+- Sizde kalan bir dosyaya yedekleme ve geri yükleme
+- GPS konumu, yer arama, kayıtlı yerler veya elle koordinat; her namaz için dakika düzeltmesi
+- Birden çok vakit kaynağı — İsveç ve Fas'ın yayımlanmış resmî tabloları dâhil — ya da tamamen cihaz üzerinde hesaplama
+- Arapça ve Urduca dâhil, sağdan sola yerleşimli 13 dil
+- Açık, koyu, saf siyah ve sistem temaları, seçtiğiniz vurgu rengi ve Material You
+
+Gizlilik ve ağ kullanımı:
+- Analitik yok, izleyici yok, reklam yok, hesap yok
+- Konum belirlendikten sonra vakitler tamamen cihazınızda hesaplanabilir
+- Yalnızca siz seçtiğinizde kullanılan isteğe bağlı çevrimiçi özellikler: vakit sağlayıcıları (AlAdhan, PrayTimes.dev veya İsveç ve Fas için hazırlanmış resmî tablolar), OpenStreetMap Nominatim ile yer arama ve Kuran sayfaları, mealler, tefsirler ile tilavet seslerinin indirilmesi
+- Eşitleme bize ait hiçbir sunucudan geçmez ve yazdıkları, eşlediğiniz cihazlar dışında hiçbir şey tarafından okunamaz
+- Koordinatlarınız yalnızca cihazınızda saklanır
+
+Uygulama AGPL-3.0-or-later lisansıyla açık kaynaktır.

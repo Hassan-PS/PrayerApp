@@ -1,0 +1,27 @@
+Mihrab håller de fem dagliga bönerna nära till hands: en lugn startskärm med nästa bön och en levande nedräkning, valfria böneutrop, en hel månads översikt och widgetar på hemskärmen.
+
+Viktigaste funktionerna:
+- Bönetider för idag, veckan framåt och en hel månad — kan delas som bild eller PDF
+- Valfria aviseringar för de fem dagliga bönerna, med sjutton adhan-inspelningar eller en egen, påminnelse före bönen och snooze
+- Fastnålad nedräkning till bönen (Live Activity) på låsskärmen och i aviseringspanelen, i tre utföranden
+- Widgetar på hemskärmen: bönetider i tre storlekar, dagens logg, hijridatum, svit, tasbih och läsning
+- Qiblakompass med signalstyrka och en kontroll mot solen
+- Koranläsare: Medinamushafen ritad ur de officiella sidtypsnitten, i fyra riwayat (Hafs, Warsh, Qalun, Shu'bah), med 13 översättningar och klassisk tafsir, 42 recitatörer, ordvis markering, memoreringsverktyg, bokmärken och khatmah-planer
+- Tilawah — lyssnandet som en egen sida: välj recitatör och låt sura följa på sura med skärmen släckt, från låsskärmen, med sovtimer, hastighetsreglage och en levande mushafsida där det reciterade ordet lyser upp
+- Duaer (Hisn al-Muslim), tasbihräknare, fasteregister, bönedagbok med praktikgraf och sviter, samt moskéer i närheten
+- Hijrikalender som lyfter fram ramadan, eid och fredagsbönen
+- Synk mellan dina egna enheter utan konto och utan server: förseglade filer i en mapp du redan synkar
+- Säkerhetskopiering och återställning till en fil du själv behåller
+- GPS-position, platssökning, sparade platser eller manuella koordinater; minutjustering per bön
+- Flera källor för bönetider — bland annat de publicerade nationella tabellerna för Sverige och Marocko — eller beräkning helt på enheten
+- 13 språk, inklusive arabiska och urdu med höger-till-vänster-layout
+- Ljust, mörkt, helsvart och systemtema, din egen accentfärg och Material You
+
+Integritet och nätverksanvändning:
+- Ingen analys, inga spårare, ingen reklam, inget konto
+- Bönetiderna kan räknas ut helt på din enhet så snart en plats är angiven
+- Valfria funktioner på nätet, som bara används när du väljer dem: bönetidskällor (AlAdhan, PrayTimes.dev eller de förberedda nationella tabellerna för Sverige och Marocko), platssökning via OpenStreetMap Nominatim, och nedladdning av Koranens sidor, översättningar, tafsir och recitationsljud
+- Synken passerar aldrig någon server av vår, och det den skriver är oläsbart för allt utom de enheter du parat ihop
+- Dina koordinater lagras bara på din egen enhet
+
+Appen är öppen källkod under AGPL-3.0-or-later.

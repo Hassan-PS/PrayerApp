@@ -1,0 +1,27 @@
+Mihrab hält die fünf täglichen Gebete griffbereit: ein ruhiger Startbildschirm mit dem nächsten Gebet und einem laufenden Countdown, optionale Adhan-Erinnerungen, eine Monatsübersicht und Widgets für den Homescreen.
+
+Wichtigste Funktionen:
+- Gebetszeiten für heute, die kommende Woche und einen ganzen Monat — als Bild oder PDF teilbar
+- Optionale Benachrichtigungen für die fünf Gebete, mit siebzehn Adhan-Aufnahmen oder einer eigenen, Vorab-Erinnerung und Schlummerfunktion
+- Angehefteter Gebets-Countdown (Live Activity) auf dem Sperrbildschirm und in der Benachrichtigungsleiste, in drei Ausführungen
+- Homescreen-Widgets: Gebetszeiten in drei Größen, das Tagesprotokoll, Hidschri-Datum, Serie, Tasbih und Lesefortschritt
+- Qibla-Kompass mit Signalstärke und einer Gegenprobe über den Sonnenstand
+- Koranleser: der Medina-Mushaf aus den offiziellen Seiten-Schriftarten gezeichnet, in vier Riwayat (Hafs, Warsch, Qalun, Schuʿba), mit 13 Übersetzungen und klassischem Tafsir, 42 Rezitatoren, wortgenauer Hervorhebung, Werkzeugen zum Auswendiglernen, Lesezeichen und Khatma-Plänen
+- Tilawa — das Hören als eigene Seite: einen Rezitator wählen, und es läuft Sure für Sure weiter, auch bei ausgeschaltetem Bildschirm und vom Sperrbildschirm aus, mit Sleeptimer, Tempo-Regler und einer lebenden Mushaf-Seite, auf der das rezitierte Wort aufleuchtet
+- Bittgebete (Hisn al-Muslim), Tasbih-Zähler, Fastenprotokoll, Gebetstagebuch mit Praxisdiagramm und Serien sowie Moscheen in der Nähe
+- Hidschri-Kalender mit Ramadan, Eid und Dschumuʿa hervorgehoben
+- Abgleich zwischen deinen eigenen Geräten, ohne Konto und ohne Server: versiegelte Dateien in einem Ordner, den du ohnehin synchronisierst
+- Sicherung und Wiederherstellung in eine Datei, die bei dir bleibt
+- GPS-Standort, Ortssuche, gespeicherte Orte oder manuelle Koordinaten; Minutenkorrektur je Gebet
+- Mehrere Quellen für die Zeiten — darunter die veröffentlichten nationalen Tabellen für Schweden und Marokko — oder vollständige Berechnung auf dem Gerät
+- 13 Sprachen, darunter Arabisch und Urdu mit Rechts-nach-links-Layout
+- Helles, dunkles, tiefschwarzes und Systemdesign, eine Akzentfarbe deiner Wahl und Material You
+
+Datenschutz und Netznutzung:
+- Keine Analytik, keine Tracker, keine Werbung, kein Konto
+- Die Gebetszeiten lassen sich vollständig auf dem Gerät berechnen, sobald ein Standort feststeht
+- Optionale Onlinefunktionen, nur wenn du sie wählst: Zeitanbieter (AlAdhan, PrayTimes.dev oder die vorbereiteten nationalen Tabellen für Schweden und Marokko), Ortssuche über OpenStreetMap Nominatim und das Herunterladen von Koranseiten, Übersetzungen, Tafsir und Rezitationen
+- Der Abgleich läuft über keinen Server von uns, und was er schreibt, ist für nichts außer den von dir gekoppelten Geräten lesbar
+- Deine Koordinaten werden nur auf deinem Gerät gespeichert
+
+Die App ist quelloffen unter AGPL-3.0-or-later.

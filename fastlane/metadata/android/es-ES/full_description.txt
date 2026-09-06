@@ -1,0 +1,27 @@
+Mihrab mantiene las cinco oraciones diarias a mano: una pantalla de inicio serena con la próxima oración y una cuenta atrás en vivo, recordatorios de adhan opcionales, una vista de mes completo y widgets para la pantalla de inicio.
+
+Funciones principales:
+- Horarios de oración para hoy, la semana siguiente y un mes entero — se pueden compartir como imagen o PDF
+- Notificaciones opcionales para las cinco oraciones, con diecisiete grabaciones de adhan o la tuya propia, aviso previo y posponer
+- Cuenta atrás fijada (Live Activity) en la pantalla de bloqueo y en el panel de notificaciones, en tres diseños
+- Widgets de pantalla de inicio: horarios en tres tamaños, el registro del día, la fecha hiyrí, la racha, el tasbih y la lectura
+- Brújula de la alquibla con intensidad de señal y comprobación con la posición del sol
+- Lector del Corán: el mushaf de Medina dibujado con las tipografías oficiales de página, en cuatro riwayat (Hafs, Warsh, Qalun, Shuʿba), con 13 traducciones y tafsir clásico, 42 recitadores, resaltado palabra por palabra, herramientas de memorización, marcadores y planes de jatma
+- Tilawa — la escucha como página propia: elige un recitador y las suras se encadenan con la pantalla apagada, desde la pantalla de bloqueo, con temporizador de apagado, control de velocidad y una página de mushaf viva donde se ilumina la palabra recitada
+- Súplicas (Hisn al-Muslim), contador de tasbih, registro de ayuno, diario de oración con gráfico de práctica y rachas, y mezquitas cercanas
+- Calendario hiyrí que destaca Ramadán, el Eid y el viernes
+- Sincronización entre tus propios dispositivos sin cuenta y sin servidor: archivos sellados en una carpeta que ya sincronizas
+- Copia de seguridad y restauración en un archivo que guardas tú
+- Ubicación por GPS, búsqueda de lugares, lugares guardados o coordenadas manuales; ajuste en minutos por oración
+- Varias fuentes de horarios — incluidas las tablas nacionales publicadas de Suecia y Marruecos — o cálculo íntegro en el dispositivo
+- 13 idiomas, entre ellos árabe y urdu con disposición de derecha a izquierda
+- Temas claro, oscuro, negro puro y del sistema, el color de acento que elijas y Material You
+
+Privacidad y uso de la red:
+- Sin analíticas, sin rastreadores, sin publicidad, sin cuenta
+- Los horarios pueden calcularse enteramente en tu dispositivo una vez fijada la ubicación
+- Funciones en línea opcionales, usadas solo si tú las eliges: proveedores de horarios (AlAdhan, PrayTimes.dev o las tablas nacionales preparadas para Suecia y Marruecos), búsqueda de lugares mediante OpenStreetMap Nominatim, y descarga de las páginas del Corán, traducciones, tafsir y audio de recitación
+- La sincronización no pasa por ningún servidor nuestro, y lo que escribe resulta ilegible para todo salvo los dispositivos que hayas emparejado
+- Tus coordenadas se guardan solo en tu dispositivo
+
+La aplicación es de código abierto bajo AGPL-3.0-or-later.

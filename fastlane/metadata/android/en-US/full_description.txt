@@ -1,4 +1,4 @@
-Mihrab keeps the five daily prayers close at hand: a calm home screen with the next prayer and a live countdown, optional adhan reminders, a full-month planner, and home-screen widgets.
+Mihrab keeps the five daily prayers close at hand: a calm home screen with the next salah and a live countdown, optional adhan reminders, a full-month planner, and home-screen widgets.
 
 Key features:
 - Prayer times for today, the week ahead, and a full-month overview — shareable as an image or a PDF
