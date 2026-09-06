@@ -100,7 +100,7 @@ describe('the marker belongs to an occurrence, not to a name', () => {
   it('is matched on the instant in the card', () => {
     const ts = read('src/screens/home/TodayCard.tsx');
     expect(ts).toMatch(
-      /const at = combineLocalDateAndTime\(base, timings\[key\]\)\.getTime\(\);\s*\n\s*if \(at === override\.epoch\) return key;/,
+      /const at = combineLocalDateAndTime\(base, timings\[key\]\)\.getTime\(\);\s*\n\s*if \(at !== override\.epoch\) continue;/,
     );
     // Built from the selected day, so it follows the occurrence onto
     // whichever card holds it.
@@ -239,5 +239,39 @@ describe('every language can say it', () => {
     expect(j.home.alertOverrideOnce).toContain('{{mode}}');
     expect(j.home.alertOverrideA11y).toContain('{{prayer}}');
     expect(j.home.alertOverrideResetHint).toContain('{{mode}}');
+  });
+});
+
+
+describe('the row and the card agree about whether anything is temporary', () => {
+  const card = read('src/screens/home/TodayCard.tsx');
+  const kt = read(
+    'android/app/src/main/java/com/prayer_times/LiveActivityAlertModes.kt',
+  );
+
+  it('drops the line when the standing setting has caught up with it', () => {
+    // The override is written against an instant and the standing setting
+    // can move under it: silence one Fajr from the card, then set the
+    // Fajr row to silent here, and the two now say the same thing.
+    // Calling that "just this once" would tell the reader their permanent
+    // change had not taken.
+    expect(card).toMatch(
+      /return override\.mode === alertModeOf\(key\) \? null : key;/,
+    );
+  });
+
+  it('is the same test the card applies to its own marker', () => {
+    // Two places deciding "is anything temporary here" have to decide it
+    // the same way, or the row says once and the button does not.
+    expect(kt).toMatch(/fun isOverridden\([\s\S]*?o != coerce\(key, base\)/);
+  });
+
+  it('says nothing at all while the master switch is off', () => {
+    // Every row reads silent then, so a line promising an alert would be
+    // promising one that cannot happen. Inert, not gone: turning the
+    // switch back on before that instant brings it back.
+    expect(card).toMatch(/if \(!alertsEnabled\) return null;/);
+    expect(card).toContain('alertsEnabled,');
+    expect(card).toContain('alertModeOf,');
   });
 });

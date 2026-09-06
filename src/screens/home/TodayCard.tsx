@@ -491,14 +491,28 @@ function TodayCardImpl({
   const override = useNextAlertOverride();
   const overrideKey = useMemo(() => {
     if (!override) return null;
+    // WITH NOTIFICATIONS OFF THERE IS NOTHING TO EXPLAIN. The master
+    // switch has already made every row silent, so a line promising
+    // "Alert just this once" would be promising an alert that cannot
+    // happen. The override is inert, not gone: turn the switch back on
+    // before that instant and the line returns with it.
+    if (!alertsEnabled) return null;
     const base = addDays(startOfLocalDay(new Date()), selected);
     for (const key of visibleRows) {
       if (key !== override.name) continue;
       const at = combineLocalDateAndTime(base, timings[key]).getTime();
-      if (at === override.epoch) return key;
+      if (at !== override.epoch) continue;
+      // AND ONLY WHEN IT STILL DIFFERS FROM THE ROW. An override is
+      // written against an instant and the standing setting can move
+      // under it: silence one Fajr from the card, then set the Fajr row
+      // to silent here, and the two now say the same thing. Calling that
+      // "just this once" would tell the reader their permanent change had
+      // not taken. The card drops its own marker on the same test, and
+      // the two must not disagree about whether anything is temporary.
+      return override.mode === alertModeOf(key) ? null : key;
     }
     return null;
-  }, [override, selected, visibleRows, timings]);
+  }, [override, selected, visibleRows, timings, alertsEnabled, alertModeOf]);
   /**
    * What the row is set to when nobody has overridden it — what reset
    * puts back. Read the same way the cycling control reads it, master
