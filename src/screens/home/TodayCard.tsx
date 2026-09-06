@@ -56,6 +56,7 @@ import {
   addDays,
   combineLocalDateAndTime,
   countdownParts,
+  eventAt,
   startOfLocalDay,
 } from '../../utils/prayerTimes';
 import { isRtlLanguage } from '../../i18n/layoutDirection';
@@ -66,6 +67,7 @@ import {
   clearNextAlertOverride,
 } from '../../notifications/adhanMute';
 import { clearNativeAlertOverride } from '../../native/MihrabLiveActivity';
+import { ymdLocal } from '../../notifications/scheduling';
 import { QiblaChipCorner } from './QiblaChip';
 import { HOME_TABLE_RADIUS } from './tokens';
 
@@ -479,14 +481,19 @@ function TodayCardImpl({
    * The one occurrence the Live Activity's button has put on a different
    * alert — and which row of THIS day, if any, that is.
    *
-   * Matched on the instant, not the name, because that is what the
-   * override is: silencing tonight's Isha says nothing about tomorrow's,
-   * and a name match would put the marker on both. The arithmetic is the
-   * scheduler's — this day's midnight plus the row's clock time — so the
-   * number compared here is the same one the alert was written against.
+   * Matched on the event AND the day it falls on, which is what an
+   * occurrence is: silencing tonight's Ishāʾ says nothing about
+   * tomorrow's, and the name alone would put the marker on both.
+   *
+   * The day comes from `eventAt`, the scheduler's own answer to "when
+   * does this row happen" — not from the card's date. The First Third of
+   * the night belongs to the evening it starts in, so at a long summer
+   * latitude it sits on this card while its instant is tomorrow's; asking
+   * any other way named a different occurrence than the one the alert was
+   * written against, and the marker never appeared for it at all.
    *
    * It follows the occurrence onto whichever card holds it, which after
-   * Isha is tomorrow's.
+   * Ishāʾ is tomorrow's.
    */
   const override = useNextAlertOverride();
   const overrideKey = useMemo(() => {
@@ -500,8 +507,7 @@ function TodayCardImpl({
     const base = addDays(startOfLocalDay(new Date()), selected);
     for (const key of visibleRows) {
       if (key !== override.name) continue;
-      const at = combineLocalDateAndTime(base, timings[key]).getTime();
-      if (at !== override.epoch) continue;
+      if (ymdLocal(eventAt(key, timings, base)) !== override.date) continue;
       // AND ONLY WHEN IT STILL DIFFERS FROM THE ROW. An override is
       // written against an instant and the standing setting can move
       // under it: silence one Fajr from the card, then set the Fajr row

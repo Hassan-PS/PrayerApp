@@ -101,3 +101,17 @@ export function preReminderId(
 ): string {
   return `pt-pre-${eventEpochMs - minutesBefore * 60_000}-${name}`;
 }
+
+/**
+ * Local ISO day key. Local, not UTC: the day a person is living in.
+ *
+ * Shared because it is now half of an identity. An occurrence of a prayer
+ * is "Fajr, on this day" — see `NextAlertOverride` — and both the app and
+ * the notification module have to derive that day from an instant the
+ * same way.
+ */
+export function ymdLocal(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}

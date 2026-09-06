@@ -224,7 +224,7 @@ describe('one tap is one step, and the step is recomputed at tap time', () => {
 
   it('clears the override when the cycle comes back round', () => {
     expect(code(KOTLIN)).toMatch(
-      /if \(mode == baseMode\) \{\s*\n?\s*e\.remove\(KEY_OVERRIDE_EPOCH\)\.remove\(KEY_OVERRIDE_MODE\)/,
+      /if \(mode == baseMode\) \{[\s\S]{0,220}?remove\(KEY_OVERRIDE_DATE\)/,
     );
   });
 
@@ -247,11 +247,35 @@ describe('one tap is one step, and the step is recomputed at tap time', () => {
 });
 
 describe('an override speaks for one occurrence', () => {
-  const o = { epoch: 1_800_000_000_000, name: 'Fajr', mode: 'silent' as const };
+  const EPOCH = new Date(2026, 8, 8, 3, 37, 0, 0).getTime();
+  const o = {
+    epoch: EPOCH,
+    name: 'Fajr',
+    date: '2026-09-08',
+    mode: 'silent' as const,
+  };
 
-  it('matches only its own instant', () => {
+  it('matches its own occurrence', () => {
     expect(overrideAppliesTo(o, o.epoch, 'Fajr')).toBe(true);
     expect(overrideAppliesTo(o, o.epoch + 86_400_000, 'Fajr')).toBe(false);
+  });
+
+  it('survives the prayer time being recalculated under it', () => {
+    // THE WHOLE POINT OF NOT KEYING ON THE INSTANT. A per-prayer offset,
+    // a change of calculation method or provider, or automatic location
+    // resolving somewhere new all move a prayer by a minute or two. The
+    // override used to match nothing after that — and no match means the
+    // standing setting, which is usually the adhan. "I silenced Fajr and
+    // the adhan played anyway."
+    expect(overrideAppliesTo(o, EPOCH + 4 * 60_000, 'Fajr')).toBe(true);
+    expect(overrideAppliesTo(o, EPOCH - 90 * 60_000, 'Fajr')).toBe(true);
+  });
+
+  it('still will not reach across midnight', () => {
+    // A recalculation that carries an event onto another day has made it
+    // another occurrence, and this must not speak for that one.
+    const nextDay = new Date(2026, 8, 9, 0, 5, 0, 0).getTime();
+    expect(overrideAppliesTo(o, nextDay, 'Fajr')).toBe(false);
   });
 
   it('matches only its own event', () => {
@@ -268,30 +292,41 @@ describe('an override speaks for one occurrence', () => {
     expect(parseNextAlertOverride(JSON.stringify(o))).toEqual(o);
   });
 
+  it('gives a record from the older build its day back', () => {
+    // Those carried the instant and nothing else, and the instant WAS the
+    // day, so this is exact — an override set just before an update keeps
+    // working instead of lapsing into the adhan on the way through.
+    const older: Record<string, unknown> = { ...o };
+    delete older.date;
+    expect(parseNextAlertOverride(JSON.stringify(older))?.date).toBe(
+      '2026-09-08',
+    );
+  });
+
   it('reads the old mute marker as the plain alert', () => {
     // The two-state button's mute rescheduled onto the default channel
     // rather than cancelling, so it meant "alert", not "silent". An
     // install that updated between a mute and the prayer it muted would
     // otherwise have heard the adhan anyway.
-    expect(parseNextAlertOverride('1800000000000-Fajr')).toEqual({
-      epoch: 1_800_000_000_000,
+    expect(parseNextAlertOverride(`${EPOCH}-Fajr`)).toEqual({
+      epoch: EPOCH,
       name: 'Fajr',
+      date: '2026-09-08',
       mode: 'notification',
     });
   });
 
   it('refuses the adhan for a time that is not a prayer', () => {
-    expect(
-      parseNextAlertOverride(
-        JSON.stringify({ epoch: 1, name: 'Sunrise', mode: 'adhan' }),
-      ),
-    ).toEqual({ epoch: 1, name: 'Sunrise', mode: 'notification' });
+    const coerced = parseNextAlertOverride(
+      JSON.stringify({ epoch: EPOCH, name: 'Sunrise', mode: 'adhan' }),
+    );
+    expect(coerced?.mode).toBe('notification');
   });
 
   it('does not carry to the same prayer on another day', () => {
-    // The one that has to hold for weeks. An override is written against
-    // an instant precisely so that silencing tonight's Isha says nothing
-    // about tomorrow's — and the key alone would have made it permanent,
+    // The one that has to hold for weeks. An override names ONE day
+    // precisely so that silencing tonight's Ishāʾ says nothing about
+    // tomorrow's — and the name alone would have made it permanent,
     // which is the difference between this control and the home row.
     const DAY = 86_400_000;
     expect(overrideAppliesTo(o, o.epoch + DAY, 'Fajr')).toBe(false);
@@ -307,7 +342,9 @@ describe('an override speaks for one occurrence', () => {
     expect(ts).toMatch(/AsyncStorage\.setItem\(\s*\n?\s*MUTED_NEXT_ADHAN_KEY,/);
     expect(ts).not.toMatch(/getAllKeys|multiSet|push\(/);
     const kt = code(KOTLIN);
-    expect(kt).toMatch(/putLong\(KEY_OVERRIDE_EPOCH, epochMs\)\.putString\(KEY_OVERRIDE_MODE, mode\)/);
+    expect(kt).toMatch(
+      /putString\(KEY_OVERRIDE_NAME, key\)[\s\S]{0,200}?putString\(KEY_OVERRIDE_DATE, dayOf\(epochMs\)\)/,
+    );
   });
 
   it('refuses nonsense rather than guessing', () => {

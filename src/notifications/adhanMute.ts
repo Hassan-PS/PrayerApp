@@ -63,6 +63,7 @@ import {
   canUseExactAlarms,
   clampPrePrayerReminderMinutes,
   preReminderId,
+  ymdLocal,
 } from './scheduling';
 import { modesFor, type PrayerAlertMode } from '../settings/alertModes';
 
@@ -83,10 +84,38 @@ const DEFAULT_CHANNEL = 'prayer-times-default';
 
 /** One occurrence, and the mode it was given. */
 export type NextAlertOverride = {
-  /** The event's instant, in epoch ms — what makes this ONE occurrence. */
+  /**
+   * The event's instant, in epoch ms.
+   *
+   * NOT the identity — see `date`. This is here because the alert has to
+   * be scheduled at some particular millisecond, and this is the one the
+   * card was counting down to when the button was pressed.
+   */
   epoch: number;
   /** Canonical English key: Fajr, Sunrise, Lastthird, … */
   name: string;
+  /**
+   * WHICH OCCURRENCE THIS IS: the local day the event falls on.
+   *
+   * The identity was the instant alone, and an instant is the one thing
+   * about a prayer that is not fixed. A prayer's time is recomputed
+   * whenever the inputs move — the user nudges a per-prayer offset,
+   * switches calculation method or provider, or simply travels far enough
+   * for automatic location to resolve somewhere new — and the new answer
+   * is a minute or two away from the old one. The override, pinned to the
+   * old millisecond, then matched nothing.
+   *
+   * Which would be tolerable if it failed quietly, and it does not: no
+   * match means the prayer falls back to its STANDING setting, and that
+   * is usually the adhan. The failure was "I silenced Fajr from the lock
+   * screen and the adhan played anyway" — the precise complaint this
+   * control exists to answer.
+   *
+   * "Fajr, on the eighth" is what the user meant, and it survives the
+   * time being recalculated. Local day of the event's own instant, so
+   * both sides derive it from the thing they already agree about.
+   */
+  date: string;
   mode: PrayerAlertMode;
 };
 
@@ -120,14 +149,25 @@ export function parseNextAlertOverride(
       const mode = String(o.mode ?? '') as PrayerAlertMode;
       if (!Number.isFinite(epoch) || epoch <= 0 || !name) return null;
       if (!['adhan', 'notification', 'silent'].includes(mode)) return null;
-      return { epoch, name, mode: allowedMode(name, mode) };
+      // Records written before the identity moved off the instant carry no
+      // date. Deriving it from the epoch is exact for them — the epoch WAS
+      // the instant — so an override set just before an update keeps
+      // working rather than lapsing into the adhan on the way through.
+      const date = o.date ? String(o.date) : ymdLocal(new Date(epoch));
+      return { epoch, name, date, mode: allowedMode(name, mode) };
     } catch {
       return null;
     }
   }
   const m = /^(\d+)-(.+)$/.exec(raw);
   if (!m) return null;
-  return { epoch: Number(m[1]), name: m[2], mode: 'notification' };
+  const epoch = Number(m[1]);
+  return {
+    epoch,
+    name: m[2],
+    date: ymdLocal(new Date(epoch)),
+    mode: 'notification',
+  };
 }
 
 /** The override currently stored, or null. */
@@ -144,17 +184,18 @@ export async function getNextAlertOverride(): Promise<NextAlertOverride | null> 
 /**
  * Does this override speak for this event?
  *
- * Both halves have to match. The epoch alone would carry an override
- * across a schedule change that moved a different prayer onto the same
- * minute; the name alone would make it permanent, which is the one
- * thing it must not be.
+ * Both halves have to match. The day alone would carry an override onto
+ * every prayer of that day; the name alone would make it permanent,
+ * which is the one thing it must not be. Together they name one
+ * occurrence — and go on naming it after the clock time underneath has
+ * been recalculated, which the instant could not.
  */
 export function overrideAppliesTo(
   o: NextAlertOverride | null,
   epochMs: number,
   name: string,
 ): boolean {
-  return !!o && o.epoch === epochMs && o.name === name;
+  return !!o && o.name === name && o.date === ymdLocal(new Date(epochMs));
 }
 
 /**
@@ -351,7 +392,12 @@ export async function adhanMuteToggleTask(
     if (!Number.isFinite(epoch) || epoch <= 0 || !name) return;
     const mode = modeFromTaskData(data, name);
 
-    const raw = JSON.stringify({ epoch, name, mode } satisfies NextAlertOverride);
+    const raw = JSON.stringify({
+      epoch,
+      name,
+      date: ymdLocal(new Date(epoch)),
+      mode,
+    } satisfies NextAlertOverride);
     await AsyncStorage.setItem(MUTED_NEXT_ADHAN_KEY, raw);
     // Same process as the app when it is alive, so the row that shows this
     // updates while the shade is still open over it.

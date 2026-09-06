@@ -27,12 +27,20 @@ import org.json.JSONObject
  * instead, and the lookup below is by key, which is safe precisely
  * because a mode belongs to the prayer rather than to the day.
  *
- * ── AND WHY THE OVERRIDE IS AN INSTANT, NOT A NAME ──────────────────
+ * ── AND WHY THE OVERRIDE IS AN OCCURRENCE, NOT A NAME ───────────────
  *
- * The button is temporary by design: it speaks for THIS Fajr and not
- * for Fajr. Storing the epoch is what makes that true — the override
- * stops matching the moment the card walks past it, with nothing to
- * expire and nothing to clean up.
+ * The button is temporary by design: it speaks for THIS Fajr and not for
+ * Fajr. What identifies "this Fajr" was the instant, and an instant is
+ * the one thing about a prayer that is not fixed — the time is recomputed
+ * whenever its inputs move, and the override, pinned to the old
+ * millisecond, then matched nothing. Failing quietly would be one thing;
+ * this failed loudly, because no match means the prayer falls back to its
+ * standing setting and that is usually the adhan.
+ *
+ * So it is the event and the local day it falls on: "Fajr, on the
+ * eighth", which is what the user meant and which survives the clock time
+ * underneath being recalculated. The epoch is still carried, for
+ * scheduling — but it no longer decides anything.
  */
 object LiveActivityAlertModes {
   const val ADHAN = "adhan"
@@ -53,6 +61,9 @@ object LiveActivityAlertModes {
   /** SharedPreferences keys, in MihrabLiveActivityModule.PREFS_NAME. */
   const val KEY_OVERRIDE_EPOCH = "alert_override_epoch"
   const val KEY_OVERRIDE_MODE = "alert_override_mode"
+  /** The occurrence: which event, on which local day. See `dayOf`. */
+  const val KEY_OVERRIDE_NAME = "alert_override_name"
+  const val KEY_OVERRIDE_DATE = "alert_override_date"
 
   fun isNonPrayerKey(key: String): Boolean = NON_PRAYER_KEYS.contains(key)
 
@@ -119,15 +130,43 @@ object LiveActivityAlertModes {
    * muted would have heard the adhan anyway.
    */
   fun overrideFor(prefs: SharedPreferences, epochMs: Long, key: String): String? {
-    if (epochMs <= 0L) return null
-    val epoch = prefs.getLong(KEY_OVERRIDE_EPOCH, -1L)
-    if (epoch == epochMs) {
-      val mode = prefs.getString(KEY_OVERRIDE_MODE, "") ?: ""
-      if (mode.isNotEmpty()) return coerce(key, mode)
+    if (epochMs <= 0L || key.isEmpty()) return null
+    val mode = prefs.getString(KEY_OVERRIDE_MODE, "") ?: ""
+    if (mode.isNotEmpty()) {
+      val name = prefs.getString(KEY_OVERRIDE_NAME, "") ?: ""
+      val date = prefs.getString(KEY_OVERRIDE_DATE, "") ?: ""
+      if (name.isNotEmpty() && date.isNotEmpty()) {
+        if (name == key && date == dayOf(epochMs)) return coerce(key, mode)
+      } else if (prefs.getLong(KEY_OVERRIDE_EPOCH, -1L) == epochMs) {
+        // Written by the build where the instant WAS the identity. Exact
+        // for those, so an override set just before an update keeps
+        // working rather than lapsing into the adhan on the way through.
+        return coerce(key, mode)
+      }
     }
     val legacy = prefs.getLong(MihrabLiveActivityActionReceiver.KEY_MUTED_EPOCH, -1L)
     if (legacy > 0L && legacy == epochMs) return coerce(key, NOTIFICATION)
     return null
+  }
+
+  /**
+   * The local day an instant falls on, as yyyy-MM-dd.
+   *
+   * Must agree with `ymdLocal` on the JS side for the same instant: the
+   * two halves of one identity, computed in two languages. Both read the
+   * device's own timezone, and both take the day of the EVENT rather than
+   * of anything around it.
+   */
+  fun dayOf(epochMs: Long): String {
+    val c = java.util.Calendar.getInstance()
+    c.timeInMillis = epochMs
+    return String.format(
+      java.util.Locale.US,
+      "%04d-%02d-%02d",
+      c.get(java.util.Calendar.YEAR),
+      c.get(java.util.Calendar.MONTH) + 1,
+      c.get(java.util.Calendar.DAY_OF_MONTH),
+    )
   }
 
   /** What the button should be showing: the override if one speaks for
@@ -180,14 +219,22 @@ object LiveActivityAlertModes {
     baseMode: String,
   ) {
     val e = prefs.edit()
-    // The old key is cleared on every write, whichever way this goes: it
-    // is read as a fallback above, and a stale one would outlive the
+    // The older keys are cleared on every write, whichever way this goes:
+    // both are read as fallbacks above, and a stale one would outlive the
     // override that replaced it.
     e.remove(MihrabLiveActivityActionReceiver.KEY_MUTED_EPOCH)
     if (mode == baseMode) {
-      e.remove(KEY_OVERRIDE_EPOCH).remove(KEY_OVERRIDE_MODE)
+      e.remove(KEY_OVERRIDE_EPOCH)
+        .remove(KEY_OVERRIDE_MODE)
+        .remove(KEY_OVERRIDE_NAME)
+        .remove(KEY_OVERRIDE_DATE)
     } else {
-      e.putLong(KEY_OVERRIDE_EPOCH, epochMs).putString(KEY_OVERRIDE_MODE, mode)
+      e.putString(KEY_OVERRIDE_NAME, key)
+        .putString(KEY_OVERRIDE_DATE, dayOf(epochMs))
+        .putString(KEY_OVERRIDE_MODE, mode)
+        // Carried, not consulted: the instant the card was counting down
+        // to when this was pressed.
+        .putLong(KEY_OVERRIDE_EPOCH, epochMs)
     }
     e.apply()
   }

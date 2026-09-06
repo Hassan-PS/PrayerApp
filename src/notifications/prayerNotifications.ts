@@ -40,6 +40,7 @@ import {
   buildTimestampTrigger,
   canUseExactAlarms,
   clampPrePrayerReminderMinutes,
+  ymdLocal,
 } from './scheduling';
 
 // Re-exported: this was its home before the Live Activity's button became
@@ -392,14 +393,6 @@ export type SyncPrayerNotificationsResult =
  * fixed 2026-08-07.
  */
 export { JOURNAL_LOG_ACTION_ID };
-
-/** Local ISO day key for the day an alert belongs to. Local, not UTC: the
- *  journal is keyed on the day the user is living in. */
-function ymdLocal(d: Date): string {
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
-}
 
 /**
  * A prayer has just been recorded — take its boundaries off the schedule.

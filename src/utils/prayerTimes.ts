@@ -64,7 +64,16 @@ export function startOfLocalDay(d: Date): Date {
  * Midnight and the Last Third belong to the night that ENDS here, and
  * their pre-dawn times are already this day's.
  */
-function eventAt(name: string, timings: TimingsMap, base: Date): Date {
+/**
+ * When an event on `base`'s card actually happens.
+ *
+ * Exported because it is the one place that knows the First Third of the
+ * night belongs to the evening it starts in and not to the date its clock
+ * time falls on. Anything asking "which occurrence is this row" has to
+ * ask the same way the scheduler does, or the two name different
+ * instants for the same row.
+ */
+export function eventAt(name: string, timings: TimingsMap, base: Date): Date {
   const at = combineLocalDateAndTime(base, timings[name]);
   if (name !== 'Firstthird' || !timings.Maghrib) return at;
   return at < combineLocalDateAndTime(base, timings.Maghrib)

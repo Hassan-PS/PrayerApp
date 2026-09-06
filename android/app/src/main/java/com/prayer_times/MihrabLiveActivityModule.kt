@@ -125,6 +125,8 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
       prefs.edit()
         .remove(LiveActivityAlertModes.KEY_OVERRIDE_EPOCH)
         .remove(LiveActivityAlertModes.KEY_OVERRIDE_MODE)
+        .remove(LiveActivityAlertModes.KEY_OVERRIDE_NAME)
+        .remove(LiveActivityAlertModes.KEY_OVERRIDE_DATE)
         .remove(MihrabLiveActivityActionReceiver.KEY_MUTED_EPOCH)
         .apply()
       runCatching {
