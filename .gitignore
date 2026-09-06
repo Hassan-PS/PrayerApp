@@ -95,6 +95,21 @@ src/quran/data/source/
 *.aab
 *.ipa
 
+# Device dumps — NEVER commit these. A bugreport is a 38MB transcript of
+# everything the phone was doing: full logcat, every installed package,
+# wifi state, system API keys. One was committed on 2026-09-01 and pushed
+# to a public repo before anyone noticed. Nothing here belongs in git.
+bugreport*.zip
+bugreport*.txt
+*.hprof
+anr_*
+dumpstate*
+# Loose archives, which is the shape every one of those arrives in.
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+
 # Quran reader debug scratch (screenshots, geometry sources)
 .qr-data/
 branding/tools/__pycache__/
