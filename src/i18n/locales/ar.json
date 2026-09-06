@@ -896,7 +896,8 @@
       "title": "الاستعاذة من الضلالة"
     },
     "pronunciation": "النطق",
-    "tapToCount": "اضغط للعد"
+    "tapToCount": "اضغط للعد",
+    "shareDua": "مشاركة {{title}}"
   },
   "quran": {
     "meccan": "مكية",
@@ -1126,7 +1127,8 @@
     "oftenRead": "الأكثر قراءةً",
     "listenDeleteAudio": "حذف {{name}} من هذا الجهاز",
     "listenDownloadReciter": "تنزيل {{name}}، نحو {{size}}",
-    "listenDownloadRunning": "جارٍ التنزيل · {{done}} من {{total}}"
+    "listenDownloadRunning": "جارٍ التنزيل · {{done}} من {{total}}",
+    "shareTafsir": "مشاركة هذا التفسير ({{edition}})"
   },
   "mosques": {
     "searching": "البحث عن مساجد قريبة…",

@@ -50,6 +50,8 @@ import {
 import { playFromAyah, playRange } from '../audio/playback';
 import { RecitationControls } from '../audio/RecitationControls';
 import { ShareAyahModal } from './ShareAyahModal';
+import { ShareIcon } from '../../theme/icons';
+import { ayahShareText, tafsirShareText } from '../../share/shareText';
 import { usePrayerSettings } from '../../context/PrayerSettingsContext';
 import { RowAction, SectionHead } from '../../components/controls';
 import { ActionSheetIOS, Alert, Platform } from 'react-native';
@@ -274,9 +276,38 @@ export function AyahActionSheet({
     const text =
       translation ||
       (await getAyahTranslation(edition, surah, ayah).catch(() => ''));
-    const body = `${arabic}\n\n${text}\n\n— ${reference}`;
     try {
-      await Share.share({ message: body });
+      await Share.share({
+        message: ayahShareText({ arabic, translation: text, reference }),
+      });
+    } catch {
+      /* user cancelled */
+    }
+  };
+
+  /**
+   * The passage, not the ayah — issue #24.
+   *
+   * Its own action rather than a third option on the share above, which
+   * is deliberately "one action with two FORMATS". Tafsir is not another
+   * format of the ayah; it is a different text, by a different author,
+   * that happens to be shown underneath. It shares from where it is read.
+   *
+   * `tafsirShareText` will not build a body without naming both the
+   * edition and the ayah: a paragraph of Ibn Kathir arriving as an
+   * anonymous explanation of a verse is exactly the shape of an unsourced
+   * religious claim.
+   */
+  const shareTafsir = async () => {
+    if (!tafsirText) return;
+    try {
+      await Share.share({
+        message: tafsirShareText({
+          text: tafsirText,
+          edition: tafsirEdition.label,
+          reference,
+        }),
+      });
     } catch {
       /* user cancelled */
     }
@@ -500,11 +531,38 @@ export function AyahActionSheet({
                     ]}>
                     {tafsirText}
                   </Text>
-                  {tafsirText.length > LONG_TAFSIR
-                    ? moreToggle(tafsirExpanded, () =>
-                        setTafsirExpanded(v => !v),
-                      )
-                    : null}
+                  <View style={styles.tafsirActions}>
+                    {tafsirText.length > LONG_TAFSIR
+                      ? moreToggle(tafsirExpanded, () =>
+                          setTafsirExpanded(v => !v),
+                        )
+                      : null}
+                    {/* Trailing, and after the more/less link rather than
+                        before it: reading the rest comes before sending
+                        it, and on a passage short enough to need no
+                        toggle this is simply the only control here. */}
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={t('quran.shareTafsir', {
+                        defaultValue: 'Share this tafsir ({{edition}})',
+                        edition: tafsirEdition.label,
+                      })}
+                      hitSlop={8}
+                      onPress={() => void shareTafsir()}
+                      style={({ pressed }) => [
+                        styles.tafsirShare,
+                        { opacity: pressed ? 0.6 : 1 },
+                      ]}>
+                      <ShareIcon size={15} color={palette.accentSolid} />
+                      <Text
+                        style={[
+                          styles.moreLink,
+                          { color: palette.accentSolid },
+                        ]}>
+                        {t('common.share', 'Share')}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </>
               ) : (
                 <Text style={[styles.tafsirMeta, { color: palette.muted }]}>
@@ -709,6 +767,17 @@ const styles = StyleSheet.create({
   chipLabel: { fontSize: 12, fontWeight: '600', flexShrink: 0 },
   tafsirMeta: { fontSize: 13, fontStyle: 'italic' },
   tafsirText: { fontSize: 14, lineHeight: 22 },
+  // The more/less link keeps the leading edge; the share control is
+  // pushed to the trailing one with `marginStart: 'auto'` on the control
+  // itself, so it sits correctly whether or not the toggle is drawn —
+  // and on the right edge in English, the left in Arabic.
+  tafsirActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  tafsirShare: {
+    marginStart: 'auto',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
   tafsirRtl: { textAlign: 'right', writingDirection: 'rtl' },
   moreLink: { fontSize: 12, fontWeight: '700', marginTop: 4 },
   bookmarkRow: {

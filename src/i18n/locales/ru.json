@@ -896,7 +896,8 @@
       "title": "О защите от заблуждения"
     },
     "pronunciation": "Произношение",
-    "tapToCount": "Нажмите для счёта"
+    "tapToCount": "Нажмите для счёта",
+    "shareDua": "Поделиться: {{title}}"
   },
   "quran": {
     "meccan": "Мекканская",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Читают чаще всего",
     "listenDeleteAudio": "Удалить {{name}} с этого устройства",
     "listenDownloadReciter": "Скачать {{name}}, около {{size}}",
-    "listenDownloadRunning": "Загрузка · {{done}} из {{total}}"
+    "listenDownloadRunning": "Загрузка · {{done}} из {{total}}",
+    "shareTafsir": "Поделиться этим тафсиром ({{edition}})"
   },
   "mosques": {
     "searching": "Ищем ближайшие мечети…",

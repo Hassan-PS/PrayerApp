@@ -2,7 +2,15 @@
 // treatment would visually noise these dense surfaces; the touch
 // feedback (pressed opacity / ripple) is the right affordance here.
 import { memo, useCallback, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, Vibration, View } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  Vibration,
+  View,
+} from 'react-native';
 import { useScrollToTop } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppPalette } from '../hooks/useAppPalette';
@@ -12,9 +20,12 @@ import { useAndroidSubScreenBack } from '../navigation/useAndroidSubScreenBack';
 import {
   DUA_CATEGORIES,
   duasByCategory,
+  type Dua,
   type DuaCategory,
 } from '../duas/duas';
 import { cardEdgeStyle } from '../theme/chrome';
+import { ShareIcon } from '../theme/icons';
+import { duaShareText } from '../share/shareText';
 import { arabicTextStyle } from '../theme/typography';
 import { TITLE_BAND_MAX_FONT_SCALE, tabularNumeralStyle } from '../theme/textScale';
 import { useTabBarInset } from '../navigation/tabBarInset';
@@ -88,6 +99,39 @@ export function DuasScreen() {
   const onResetCount = useCallback((id: string) => {
     setCounts(prev => ({ ...prev, [id]: 0 }));
   }, []);
+
+  /**
+   * Hand a dua to whatever the phone can send it with — issue #24.
+   *
+   * The title and translation are the LOCALIZED ones, the same strings
+   * the card is showing: someone reading Mihrab in Turkish and sending a
+   * dua to their mother is sending it in Turkish, not in the bundled
+   * English that happens to be the fallback.
+   *
+   * The Arabic, the transliteration and the source are the dua's own and
+   * are not translated — the first two because they are the dua, the
+   * third because a citation is a reference, not prose.
+   */
+  const onShare = useCallback(
+    async (dua: Dua) => {
+      try {
+        await Share.share({
+          message: duaShareText({
+            title: t(`duas.${dua.id}.title`, { defaultValue: dua.titleEn }),
+            arabic: dua.arabic,
+            transliteration: dua.transliteration,
+            translation: t(`duas.${dua.id}.translation`, {
+              defaultValue: dua.translation,
+            }),
+            source: dua.source,
+          }),
+        });
+      } catch {
+        /* the sheet was dismissed */
+      }
+    },
+    [t],
+  );
 
   // No manual header offset (v2.8.5).
   //
@@ -166,12 +210,35 @@ export function DuasScreen() {
               styles.card,
               { backgroundColor: palette.card, ...cardEdgeStyle(palette) },
             ]}>
-            <Text
-              style={[styles.title, { color: palette.text }]}
-              maxFontSizeMultiplier={TITLE_BAND_MAX_FONT_SCALE}>
-              {/* Per-dua localized title falls back to bundled English. */}
-              {t(`duas.${dua.id}.title`, { defaultValue: dua.titleEn })}
-            </Text>
+            {/* The title, and the one action on this card — issue #24.
+                A reader wanted to send a dua to family. On the title line
+                because it names what will be sent: a control at the foot
+                of a card this tall is a long way from the thing it acts
+                on, and further still once the Arabic has been read. */}
+            <View style={styles.titleRow}>
+              <Text
+                style={[styles.title, { color: palette.text }]}
+                maxFontSizeMultiplier={TITLE_BAND_MAX_FONT_SCALE}>
+                {/* Per-dua localized title falls back to bundled English. */}
+                {t(`duas.${dua.id}.title`, { defaultValue: dua.titleEn })}
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('duas.shareDua', {
+                  defaultValue: 'Share {{title}}',
+                  title: t(`duas.${dua.id}.title`, {
+                    defaultValue: dua.titleEn,
+                  }),
+                })}
+                hitSlop={10}
+                onPress={() => onShare(dua)}
+                style={({ pressed }) => [
+                  styles.shareBtn,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}>
+                <ShareIcon size={18} color={palette.muted} />
+              </Pressable>
+            </View>
             <Text
               style={[styles.arabic, { color: palette.text }]}
               accessibilityLabel={dua.arabic}>
@@ -333,7 +400,23 @@ const styles = StyleSheet.create({
   list: { padding: 16, paddingTop: 0 },
   stack: { gap: 12 },
   card: { borderRadius: 14, padding: 16, gap: 8 },
-  title: { fontSize: 14, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    // The title takes the room; the control keeps its own.
+    gap: 8,
+  },
+  title: {
+    flexShrink: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
+  // Pushed to the trailing edge, and `marginStart: 'auto'` rather than a
+  // Spacer so a long title shrinks past it instead of pushing it off the
+  // card. Never `Left`/`Right` — this screen is read in Arabic and Urdu.
+  shareBtn: { marginStart: 'auto', padding: 2 },
   /**
    * The QURAN face, not the body one.
    *

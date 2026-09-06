@@ -896,7 +896,8 @@
       "title": "گمراہی سے بچاؤ کی دعا"
     },
     "pronunciation": "تلفظ",
-    "tapToCount": "گننے کے لیے دبائیں"
+    "tapToCount": "گننے کے لیے دبائیں",
+    "shareDua": "{{title}} شیئر کریں"
   },
   "quran": {
     "meccan": "مکی",
@@ -1126,7 +1127,8 @@
     "oftenRead": "اکثر پڑھی جانے والی",
     "listenDeleteAudio": "{{name}} کو اس ڈیوائس سے حذف کریں",
     "listenDownloadReciter": "{{name}} ڈاؤن لوڈ کریں، تقریباً {{size}}",
-    "listenDownloadRunning": "ڈاؤن لوڈ ہو رہا ہے · {{total}} میں سے {{done}}"
+    "listenDownloadRunning": "ڈاؤن لوڈ ہو رہا ہے · {{total}} میں سے {{done}}",
+    "shareTafsir": "یہ تفسیر شیئر کریں ({{edition}})"
   },
   "mosques": {
     "searching": "قریبی مساجد تلاش کیے جا رہے ہیں…",

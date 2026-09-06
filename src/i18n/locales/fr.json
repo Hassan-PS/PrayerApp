@@ -896,7 +896,8 @@
       "title": "Pour se prémunir de l'égarement"
     },
     "pronunciation": "Prononciation",
-    "tapToCount": "Toucher pour compter"
+    "tapToCount": "Toucher pour compter",
+    "shareDua": "Partager {{title}}"
   },
   "quran": {
     "meccan": "Mecquoise",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Souvent lues",
     "listenDeleteAudio": "Supprimer {{name}} de cet appareil",
     "listenDownloadReciter": "Télécharger {{name}}, environ {{size}}",
-    "listenDownloadRunning": "Téléchargement · {{done}} sur {{total}}"
+    "listenDownloadRunning": "Téléchargement · {{done}} sur {{total}}",
+    "shareTafsir": "Partager ce tafsir ({{edition}})"
   },
   "mosques": {
     "searching": "Recherche de mosquées à proximité…",

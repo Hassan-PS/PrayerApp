@@ -896,7 +896,8 @@
       "title": "为免于迷失之祷"
     },
     "pronunciation": "读音",
-    "tapToCount": "点击计数"
+    "tapToCount": "点击计数",
+    "shareDua": "分享{{title}}"
   },
   "quran": {
     "meccan": "麦加",
@@ -1126,7 +1127,8 @@
     "oftenRead": "常读章节",
     "listenDeleteAudio": "从本设备删除{{name}}",
     "listenDownloadReciter": "下载{{name}}，约 {{size}}",
-    "listenDownloadRunning": "正在下载 · {{total}} 中的 {{done}}"
+    "listenDownloadRunning": "正在下载 · {{total}} 中的 {{done}}",
+    "shareTafsir": "分享此经注（{{edition}}）"
   },
   "mosques": {
     "searching": "正在查找附近的清真寺…",

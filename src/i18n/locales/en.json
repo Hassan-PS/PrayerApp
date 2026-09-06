@@ -896,7 +896,8 @@
       "title": "For protection against being misled"
     },
     "pronunciation": "Pronunciation",
-    "tapToCount": "Tap to count"
+    "tapToCount": "Tap to count",
+    "shareDua": "Share {{title}}"
   },
   "quran": {
     "meccan": "Meccan",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Often read",
     "listenDeleteAudio": "Delete {{name}} from this device",
     "listenDownloadReciter": "Download {{name}}, about {{size}}",
-    "listenDownloadRunning": "Downloading · {{done}} of {{total}}"
+    "listenDownloadRunning": "Downloading · {{done}} of {{total}}",
+    "shareTafsir": "Share this tafsir ({{edition}})"
   },
   "mosques": {
     "searching": "Looking for nearby mosques…",

@@ -896,7 +896,8 @@
       "title": "Memohon perlindungan dari kesesatan"
     },
     "pronunciation": "Pelafalan",
-    "tapToCount": "Ketuk untuk menghitung"
+    "tapToCount": "Ketuk untuk menghitung",
+    "shareDua": "Bagikan {{title}}"
   },
   "quran": {
     "meccan": "Makkiyah",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Sering dibaca",
     "listenDeleteAudio": "Hapus {{name}} dari perangkat ini",
     "listenDownloadReciter": "Unduh {{name}}, sekitar {{size}}",
-    "listenDownloadRunning": "Mengunduh · {{done}} dari {{total}}"
+    "listenDownloadRunning": "Mengunduh · {{done}} dari {{total}}",
+    "shareTafsir": "Bagikan tafsir ini ({{edition}})"
   },
   "mosques": {
     "searching": "Mencari masjid terdekat…",

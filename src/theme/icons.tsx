@@ -26,6 +26,7 @@
  */
 
 import * as React from 'react';
+import type { ColorValue } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 type IconProps = { size?: number; color?: string };
@@ -375,6 +376,76 @@ export function MosqueIcon({ size = 24, color = '#000' }: IconProps) {
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
+
+/**
+ * Share — the node graph, not the box-and-arrow.
+ *
+ * Two conventions exist and they are platform-bound: iOS draws a square
+ * with an arrow leaving the top, Android draws three connected nodes.
+ * Mihrab ships one icon on both, so the question is which one is legible
+ * to someone who does not use the other platform — and the node graph is,
+ * because it depicts the idea (one thing going to others) rather than a
+ * gesture out of one OS's visual language.
+ *
+ * Stroked at 2, round caps, single colour: the house style above.
+ */
+export function ShareIcon({
+  size = 24,
+  color = '#000',
+}: {
+  size?: number;
+  // Wider than the shared `IconProps`, which types colour as a string.
+  // This one is drawn in `palette.muted`, and on iOS that is a real
+  // `PlatformColor('secondaryLabel')` rather than a hex — the whole
+  // reason the palette types it as `ColorValue`.
+  color?: ColorValue;
+}) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Circle
+        cx={18}
+        cy={5}
+        r={3}
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle
+        cx={6}
+        cy={12}
+        r={3}
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Circle
+        cx={18}
+        cy={19}
+        r={3}
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M8.59 13.51L15.42 17.49"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M15.41 6.51L8.59 10.49"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </Svg>
   );

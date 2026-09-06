@@ -896,7 +896,8 @@
       "title": "Por protección contra el extravío"
     },
     "pronunciation": "Pronunciación",
-    "tapToCount": "Toca para contar"
+    "tapToCount": "Toca para contar",
+    "shareDua": "Compartir {{title}}"
   },
   "quran": {
     "meccan": "Mecana",
@@ -1126,7 +1127,8 @@
     "oftenRead": "De lectura frecuente",
     "listenDeleteAudio": "Eliminar {{name}} de este dispositivo",
     "listenDownloadReciter": "Descargar {{name}}, unos {{size}}",
-    "listenDownloadRunning": "Descargando · {{done}} de {{total}}"
+    "listenDownloadRunning": "Descargando · {{done}} de {{total}}",
+    "shareTafsir": "Compartir este tafsir ({{edition}})"
   },
   "mosques": {
     "searching": "Buscando mezquitas cercanas…",

@@ -896,7 +896,8 @@
       "title": "Sapıklıktan korunma için"
     },
     "pronunciation": "Okunuş",
-    "tapToCount": "Saymak için dokun"
+    "tapToCount": "Saymak için dokun",
+    "shareDua": "{{title}} paylaş"
   },
   "quran": {
     "meccan": "Mekki",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Sık okunanlar",
     "listenDeleteAudio": "{{name}} kaydını bu cihazdan sil",
     "listenDownloadReciter": "{{name}} indir, yaklaşık {{size}}",
-    "listenDownloadRunning": "İndiriliyor · {{total}} içinden {{done}}"
+    "listenDownloadRunning": "İndiriliyor · {{total}} içinden {{done}}",
+    "shareTafsir": "Bu tefsiri paylaş ({{edition}})"
   },
   "mosques": {
     "searching": "Yakındaki camiler aranıyor…",

@@ -896,7 +896,8 @@
       "title": "বিভ্রান্তি থেকে রক্ষার দু‘আ"
     },
     "pronunciation": "উচ্চারণ",
-    "tapToCount": "গুনতে ট্যাপ করুন"
+    "tapToCount": "গুনতে ট্যাপ করুন",
+    "shareDua": "{{title}} শেয়ার করুন"
   },
   "quran": {
     "meccan": "মাক্কী",
@@ -1126,7 +1127,8 @@
     "oftenRead": "প্রায়ই পড়া হয়",
     "listenDeleteAudio": "এই ডিভাইস থেকে {{name}} মুছুন",
     "listenDownloadReciter": "{{name}} ডাউনলোড করুন, প্রায় {{size}}",
-    "listenDownloadRunning": "ডাউনলোড হচ্ছে · {{total}}-এর {{done}}"
+    "listenDownloadRunning": "ডাউনলোড হচ্ছে · {{total}}-এর {{done}}",
+    "shareTafsir": "এই তাফসীর শেয়ার করুন ({{edition}})"
   },
   "mosques": {
     "searching": "কাছাকাছি মসজিদ খোঁজা হচ্ছে…",

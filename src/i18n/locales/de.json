@@ -896,7 +896,8 @@
       "title": "Um Schutz vor Irreleitung"
     },
     "pronunciation": "Aussprache",
-    "tapToCount": "Zum Zählen tippen"
+    "tapToCount": "Zum Zählen tippen",
+    "shareDua": "{{title}} teilen"
   },
   "quran": {
     "meccan": "Mekkanisch",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Häufig gelesen",
     "listenDeleteAudio": "{{name}} von diesem Gerät löschen",
     "listenDownloadReciter": "{{name}} herunterladen, etwa {{size}}",
-    "listenDownloadRunning": "Wird geladen · {{done}} von {{total}}"
+    "listenDownloadRunning": "Wird geladen · {{done}} von {{total}}",
+    "shareTafsir": "Diesen Tafsir teilen ({{edition}})"
   },
   "mosques": {
     "searching": "Suche nach Moscheen in der Nähe…",

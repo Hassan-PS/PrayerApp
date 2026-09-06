@@ -896,7 +896,8 @@
       "title": "För skydd mot vilseledande"
     },
     "pronunciation": "Uttal",
-    "tapToCount": "Tryck för att räkna"
+    "tapToCount": "Tryck för att räkna",
+    "shareDua": "Dela {{title}}"
   },
   "quran": {
     "meccan": "Meckansk",
@@ -1126,7 +1127,8 @@
     "oftenRead": "Läses ofta",
     "listenDeleteAudio": "Ta bort {{name}} från den här enheten",
     "listenDownloadReciter": "Ladda ner {{name}}, cirka {{size}}",
-    "listenDownloadRunning": "Laddar ner · {{done}} av {{total}}"
+    "listenDownloadRunning": "Laddar ner · {{done}} av {{total}}",
+    "shareTafsir": "Dela denna tafsir ({{edition}})"
   },
   "mosques": {
     "searching": "Söker närliggande moskéer…",
