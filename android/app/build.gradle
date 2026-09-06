@@ -141,6 +141,27 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.prayer_times"
+
+    /*
+     * The Qur'an translations ship as ASSETS, not inside the JS bundle.
+     *
+     * They are ~16 MB across thirteen editions, and `index.android.bundle`
+     * is STORED in the APK — Android does not compress a `.bundle`, so
+     * every one of those megabytes was paid at full price on every
+     * download. As ordinary assets they compress like the JSON they are,
+     * to roughly a quarter of that.
+     *
+     * Held at the repo root rather than under `android/` because the same
+     * files are read by the iOS build, which copies this directory into
+     * its own bundle. One copy, two platforms, and the loader in
+     * `src/quran/translations.ts` asks each platform for its own path.
+     */
+    sourceSets {
+        main {
+            assets.srcDirs += ["$rootDir/../assets"]
+        }
+    }
+
     defaultConfig {
         applicationId "com.prayer_times"
         minSdkVersion rootProject.ext.minSdkVersion

@@ -179,9 +179,40 @@ jest.mock('@sayem314/react-native-keep-awake', () => ({
 
 jest.mock('react-native-blob-util', () => {
   const files = new Map();
+  /*
+   * Assets are read-only files that ship inside the app, so the mock
+   * reads them from the repo rather than from the in-memory map — which
+   * is what the platform does, and it keeps the tests reading the real
+   * Qur'an translations rather than a fixture pretending to be one.
+   *
+   * Both platform spellings resolve to the same folder, because on a
+   * device they do: `assets/` at the repo root is added to Android's
+   * asset roots by build.gradle and copied into the iOS bundle by the
+   * Xcode project.
+   */
+  const ASSET_ROOT = require('path').join(__dirname, 'assets');
+  const assetFile = path => {
+    const p = String(path);
+    if (p.startsWith('bundle-assets://')) {
+      return require('path').join(ASSET_ROOT, p.slice('bundle-assets://'.length));
+    }
+    if (p.startsWith('/mock/bundle/')) {
+      return require('path').join(ASSET_ROOT, p.slice('/mock/bundle/'.length));
+    }
+    return null;
+  };
   const fs = {
-    dirs: { DocumentDir: '/mock/documents', CacheDir: '/mock/cache' },
-    exists: jest.fn(async path => files.has(path)),
+    dirs: {
+      DocumentDir: '/mock/documents',
+      CacheDir: '/mock/cache',
+      MainBundleDir: '/mock/bundle',
+    },
+    asset: p => `bundle-assets://${p}`,
+    exists: jest.fn(async path => {
+      const asset = assetFile(path);
+      if (asset) return require('fs').existsSync(asset);
+      return files.has(path);
+    }),
     stat: jest.fn(async path => {
       if (!files.has(path)) throw new Error('ENOENT');
       return { size: files.get(path).length, path };
@@ -189,6 +220,8 @@ jest.mock('react-native-blob-util', () => {
     lstat: jest.fn(async () => []),
     ls: jest.fn(async () => []),
     readFile: jest.fn(async path => {
+      const asset = assetFile(path);
+      if (asset) return require('fs').readFileSync(asset, 'utf8');
       if (!files.has(path)) throw new Error('ENOENT');
       return files.get(path);
     }),

@@ -222,9 +222,10 @@ export type PrayerAppSettings = {
    * Active Quran translation edition — task #96.
    *
    * Empty string means "follow app language" (the default). When set,
-   * the QuranSurahScreen reads from `src/quran/data/translations/{id}.json`
-   * regardless of locale. See `src/quran/translations.ts` for the
-   * registry.
+   * the QuranSurahScreen reads that edition regardless of locale. The
+   * text ships as an app asset at `assets/quran/translations/{id}.json`
+   * rather than inside the JS bundle; see `src/quran/translations.ts`
+   * for the registry and the loader.
    */
   quranTranslationEdition: string;
   /**

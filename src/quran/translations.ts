@@ -1,11 +1,19 @@
 /**
  * Quran translation registry — task #96.
  *
- * Multiple Tanzil-derived translation editions are bundled so the user
- * can pick the one that matches their preferred language. Default
+ * Multiple Tanzil-derived translation editions ship with the app so the
+ * user can pick the one that matches their preferred language. Default
  * follows the active app locale (see `defaultEditionForLocale`).
  *
- * Each edition's text lives at `./data/translations/{id}.json` as a
+ * They ship as ASSETS, not inside the JS bundle. The thirteen editions
+ * are ~16 MB, and `index.android.bundle` is STORED in the APK — Android
+ * does not compress a `.bundle`, so every one of those megabytes was
+ * paid at full price on every download. As ordinary assets they
+ * compress like the JSON they are: the APK went from 50.1 MB to 37.3.
+ * They are still inside the app, so nothing about reading offline
+ * changes — only where the bytes sit and what it costs to send them.
+ *
+ * Each edition's text lives at `assets/quran/translations/{id}.json` as a
  * chapter-keyed object: `{ "1": { "1": "In the name…", … }, … }`.
  * Metro requires literal require paths so we enumerate explicitly.
  *
@@ -15,6 +23,9 @@
  *   - Tanzil-distributed editions: respective translator licenses,
  *     redistributed under CC BY 3.0 by Tanzil.
  */
+
+import { Platform } from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 export type QuranTranslationEdition = {
   /** Stable id, also the data file name. */
@@ -84,6 +95,9 @@ export function editionMatchesLocale(
 
 type ChapterMap = { [chapter: string]: { [ayah: string]: string } };
 
+/** What an unknown or unreadable edition falls back to. */
+const FALLBACK_EDITION: QuranTranslationId = 'en.sahih';
+
 /**
  * All 6,236 ayahs of one edition, as a lookup map.
  *
@@ -151,50 +165,41 @@ export async function loadTranslation(
   return work;
 }
 
+/**
+ * The file this edition lives in, per platform.
+ *
+ * Android reads its assets through a `bundle-assets://` URI; iOS reads
+ * them out of the main bundle directory. `android/app/build.gradle`
+ * adds the repo's `assets/` folder to the Android asset roots and the
+ * Xcode project copies the same folder into the iOS bundle, so one set
+ * of files answers both.
+ */
+function assetPath(edition: QuranTranslationId): string {
+  const file = `quran/translations/${edition}.json`;
+  return Platform.OS === 'android'
+    ? ReactNativeBlobUtil.fs.asset(file)
+    : `${ReactNativeBlobUtil.fs.dirs.MainBundleDir}/${file}`;
+}
+
+/**
+ * Read one edition off the disk.
+ *
+ * Falls back to the default edition rather than throwing, and then to an
+ * empty map rather than recursing: a missing file should cost the reader
+ * their translation, never the screen it was going to appear on. The
+ * ayah and surah helpers below already treat an absent entry as an empty
+ * string, so an empty map degrades to Arabic-only — which is a reading
+ * of the Qur'an, and not a crash.
+ */
 async function readEdition(edition: QuranTranslationId): Promise<ChapterMap> {
-  switch (edition) {
-    case 'en.sahih':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/en.sahih.json');
-    case 'en.pickthall':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/en.pickthall.json');
-    case 'sv.bernstrom':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/sv.bernstrom.json');
-    case 'bn.bengali':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/bn.bengali.json');
-    case 'ur.jalandhry':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/ur.jalandhry.json');
-    case 'hi.hindi':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/hi.hindi.json');
-    case 'fr.hamidullah':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/fr.hamidullah.json');
-    case 'es.cortes':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/es.cortes.json');
-    case 'de.bubenheim':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/de.bubenheim.json');
-    case 'tr.diyanet':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/tr.diyanet.json');
-    case 'id.indonesian':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/id.indonesian.json');
-    case 'ru.kuliev':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/ru.kuliev.json');
-    case 'zh.jian':
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/zh.jian.json');
-    default:
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require('./data/translations/en.sahih.json');
+  const wanted = isKnownEdition(edition) ? edition : FALLBACK_EDITION;
+  try {
+    const raw = await ReactNativeBlobUtil.fs.readFile(assetPath(wanted), 'utf8');
+    return JSON.parse(String(raw)) as ChapterMap;
+  } catch (e) {
+    if (wanted !== FALLBACK_EDITION) return readEdition(FALLBACK_EDITION);
+    console.warn('[translations] could not read', wanted, e);
+    return {};
   }
 }
 

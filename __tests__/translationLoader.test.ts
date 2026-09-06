@@ -134,3 +134,63 @@ describe('nothing reads a translation during a render any more', () => {
     );
   });
 });
+
+
+describe('the editions stay out of the JS bundle', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const ROOT = path.join(__dirname, '..');
+  const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf-8');
+
+  it('is not reachable by a require, which is what would re-bundle it', () => {
+    // A single static `require()` of one of these files puts ALL of it
+    // back: Metro follows a require in any branch unconditionally, which
+    // is exactly how thirteen editions came to ship in a bundle that
+    // Android then refuses to compress.
+    const src = read('src/quran/translations.ts');
+    expect(src).not.toMatch(/require\(['"]\.\/data\/translations/);
+    expect(src).not.toMatch(/from ['"]\.\/data\/translations/);
+    expect(src).toContain('ReactNativeBlobUtil.fs.readFile');
+  });
+
+  it('has no source tree left for anything to import', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/quran/data/translations'))).toBe(
+      false,
+    );
+  });
+
+  it('ships every registered edition, and only those', () => {
+    // An edition in the registry with no file is a reader with no
+    // translation; a file with no registry entry is weight nobody asked
+    // for — which is how a 2.4 MB Arabic tafsir sat in the repo for a
+    // release after being retired from the list.
+    const onDisk = fs
+      .readdirSync(path.join(ROOT, 'assets/quran/translations'))
+      .filter((f: string) => f.endsWith('.json'))
+      .map((f: string) => f.replace(/\.json$/, ''))
+      .sort();
+    const registered = QURAN_TRANSLATIONS.map(e => e.id).sort();
+    expect(onDisk).toEqual(registered);
+  });
+
+  it('is wired into the Android build as an asset root', () => {
+    const gradle = read('android/app/build.gradle');
+    expect(gradle).toMatch(/assets\.srcDirs \+= \["\$rootDir\/\.\.\/assets"\]/);
+  });
+
+  it('is wired into the iOS build as a copied folder', () => {
+    // A folder reference, so the tree lands in the bundle at the same
+    // path Android's asset root produces — one loader, two platforms.
+    const pbx = read('ios/PrayerApp.xcodeproj/project.pbxproj');
+    expect(pbx).toMatch(
+      /isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = "\.\.\/assets\/quran"/,
+    );
+    expect(pbx).toMatch(/[0-9A-F]{24} \/\* quran in Resources \*\//);
+  });
+
+  it('asks each platform for its own path', () => {
+    const src = read('src/quran/translations.ts');
+    expect(src).toMatch(/ReactNativeBlobUtil\.fs\.asset\(file\)/);
+    expect(src).toMatch(/ReactNativeBlobUtil\.fs\.dirs\.MainBundleDir/);
+  });
+});
