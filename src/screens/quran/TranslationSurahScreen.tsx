@@ -126,11 +126,19 @@ export function TranslationSurahScreen({
   useEffect(() => {
     let cancelled = false;
     setTranslations(null);
-    // Defer the (potentially first-time) 1–2 MB edition require until
-    // after the transition/paint.
+    // Defer the (potentially first-time) 1–2 MB edition read until after
+    // the transition/paint. The timeout stays now that the read is off
+    // the bundle and onto the disk: it is what keeps the first frame of
+    // the screen from waiting on it at all.
     const timer = setTimeout(() => {
       if (cancelled) return;
-      setTranslations(getSurahTranslation(edition, surahNumber));
+      getSurahTranslation(edition, surahNumber)
+        .then(texts => {
+          if (!cancelled) setTranslations(texts);
+        })
+        .catch(() => {
+          if (!cancelled) setTranslations([]);
+        });
     }, 0);
     return () => {
       cancelled = true;

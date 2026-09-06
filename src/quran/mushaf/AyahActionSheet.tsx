@@ -195,7 +195,36 @@ export function AyahActionSheet({
   }, [visible, tafsirOpen, tafsirEdition.id, surah, ayah]);
 
   const meta = findSurah(surah);
-  const translation = getAyahTranslation(edition, surah, ayah);
+  /**
+   * The translation, fetched rather than read.
+   *
+   * It used to be a synchronous call in the render body, which worked
+   * only because the whole edition sat in the JS bundle and Metro's
+   * require cache kept it alive after the first ayah. The editions have
+   * moved off the bundle, so this is a read now — and a read cannot
+   * happen during a render.
+   *
+   * Empty until it arrives, which is the same thing this sheet already
+   * does for the tafsir above. The one place an empty string must not
+   * escape is the share text below, which fetches it again rather than
+   * trusting this — see `shareText`.
+   */
+  const [translation, setTranslation] = useState('');
+  useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+    setTranslation('');
+    getAyahTranslation(edition, surah, ayah)
+      .then(text => {
+        if (!cancelled) setTranslation(text);
+      })
+      .catch(() => {
+        if (!cancelled) setTranslation('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, edition, surah, ayah]);
   const starred = isStarred(state, surah, ayah);
   const bookmark = findBookmark(state, surah, ayah);
   const plan = activeKhatmah(state);
@@ -236,7 +265,16 @@ export function AyahActionSheet({
   };
 
   const shareText = async () => {
-    const body = `${arabic}\n\n${translation}\n\n— ${reference}`;
+    // Fetch rather than read the state, in the one case where an empty
+    // string would be shipped somewhere it cannot be corrected. The
+    // sheet can show a blank line for the instant before the translation
+    // lands; a message sent to somebody else with the translation
+    // missing is a different kind of wrong. Resolves immediately once it
+    // is in the cache, which by this point it almost always is.
+    const text =
+      translation ||
+      (await getAyahTranslation(edition, surah, ayah).catch(() => ''));
+    const body = `${arabic}\n\n${text}\n\n— ${reference}`;
     try {
       await Share.share({ message: body });
     } catch {

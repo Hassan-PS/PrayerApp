@@ -199,7 +199,23 @@ export function QuranScreen() {
       cancelled = true;
     };
   }, [votdRef]);
-  const votdTranslation = getAyahTranslation(edition, votdRef.surah, votdRef.ayah);
+  // Fetched, not read: the editions live on disk now rather than in the
+  // JS bundle. Empty for the first frame, which the card already handles
+  // — it falls back to the reference alone.
+  const [votdTranslation, setVotdTranslation] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    getAyahTranslation(edition, votdRef.surah, votdRef.ayah)
+      .then(text => {
+        if (!cancelled) setVotdTranslation(text);
+      })
+      .catch(() => {
+        if (!cancelled) setVotdTranslation('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [edition, votdRef]);
   const votdSurah = findSurah(votdRef.surah);
   // Second row of the card follows the app-wide companion mode (v2.7.40) —
   // the toggle here IS the global switch, and the edition caption below

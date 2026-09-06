@@ -112,7 +112,8 @@ async function ayahForDay(
   } catch {
     // Arabic text unavailable — translation-only body still works.
   }
-  const translation = getAyahTranslation(edition, ref.surah, ref.ayah) ?? '';
+  const translation =
+    (await getAyahTranslation(edition, ref.surah, ref.ayah)) ?? '';
   return { ref, arabic, translation };
 }
 

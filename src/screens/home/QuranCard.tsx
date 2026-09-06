@@ -67,6 +67,12 @@ function QuranCardImpl({ onOpenAt, onOpenQuran }: Props) {
   const votd = useVerseOfTheDay();
   const edition = useActiveEdition();
   const [votdArabic, setVotdArabic] = useState('');
+  // Fetched alongside the Arabic below rather than read in the render
+  // body: the editions have moved off the JS bundle, so this is a read
+  // from disk now. It also cannot be a hook down in the `card.kind ===
+  // 'ayah'` branch where it used to be computed — that branch is
+  // conditional, and hooks are not.
+  const [votdTranslation, setVotdTranslation] = useState('');
 
   // A card that says "Continue" into the muṣḥaf is a reader about to open
   // it. Bring the page-layout data in now, after the home screen has
@@ -91,10 +97,17 @@ function QuranCardImpl({ onOpenAt, onOpenQuran }: Props) {
       if (cancelled || !loaded) return;
       setVotdArabic(loaded.arabic[votd.ayah - 1] ?? '');
     });
+    getAyahTranslation(edition, votd.surah, votd.ayah)
+      .then(text => {
+        if (!cancelled) setVotdTranslation(text);
+      })
+      .catch(() => {
+        if (!cancelled) setVotdTranslation('');
+      });
     return () => {
       cancelled = true;
     };
-  }, [needsVerse, votd]);
+  }, [needsVerse, votd, edition]);
 
   const surahLabel = (n: number) => {
     const meta = findSurah(n);
@@ -122,7 +135,7 @@ function QuranCardImpl({ onOpenAt, onOpenQuran }: Props) {
 
   if (card.kind === 'ayah') {
     const verseRef = `${surahLabel(votd.surah)} ${votd.surah}:${votd.ayah}`;
-    const translation = getAyahTranslation(edition, votd.surah, votd.ayah);
+    const translation = votdTranslation;
     return (
       <GlassSurface
         style={[

@@ -117,7 +117,7 @@ export async function searchQuran(
   // Latin-script query → translation search, surah by surah.
   const lq = q.toLowerCase();
   for (const s of SURAHS) {
-    const texts = getSurahTranslation(edition, s.number);
+    const texts = await getSurahTranslation(edition, s.number);
     for (let i = 0; i < texts.length; i++) {
       if (texts[i].toLowerCase().includes(lq)) {
         const entry = entries.find(

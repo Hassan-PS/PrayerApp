@@ -85,12 +85,73 @@ export function editionMatchesLocale(
 type ChapterMap = { [chapter: string]: { [ayah: string]: string } };
 
 /**
- * Synchronously load all 6,236 ayahs of a translation edition into a
- * lookup map. Each call returns the bundled JSON object (Metro caches
- * the require). Adds ~1–2 MB to the JS bundle per edition selected at
- * runtime; we keep them all in tree-shake-friendly switch branches.
+ * All 6,236 ayahs of one edition, as a lookup map.
+ *
+ * ── WHY THIS IS ASYNC WHEN ITS BODY IS NOT ──────────────────────────
+ *
+ * The body still returns a bundled `require`, synchronously, and this
+ * still resolves on the first tick. The signature has moved ahead of it
+ * on purpose, because the thirteen editions are about to stop being part
+ * of the JS bundle.
+ *
+ * They are ~18 MB of the bundle's 26, and `assets/index.android.bundle`
+ * is STORED in the APK — zero compression, because Android does not
+ * compress a `.bundle`. The same JSON as an ordinary asset gzips to
+ * about 4.5 MB. Moving it is roughly thirteen megabytes off a fifty
+ * megabyte download, and it costs nothing anybody can see: the files
+ * still ship inside the app, so nothing about reading the Qur'an
+ * offline changes.
+ *
+ * Reading a file is asynchronous, and three of the call sites read a
+ * translation in a component's render body — where a promise cannot go.
+ * So the signature changes first, on its own, with the body untouched:
+ * every caller is moved and proven while the data is still coming from
+ * the same place it always did. `loadSurah` in `quran.ts` has had
+ * exactly this shape for a while — an async façade over a sync require
+ * switch — which is what makes this a small step rather than a leap.
  */
-export function loadTranslation(edition: QuranTranslationId): ChapterMap {
+/**
+ * One edition at a time, and the read that is fetching it.
+ *
+ * Metro's require cache used to do this for free — that is the only
+ * reason `getAyahTranslation` could sit in a render body and cost
+ * nothing after the first ayah. A read from disk has no such cache, and
+ * the render-path callers would have re-read a megabyte per render
+ * without one.
+ *
+ * The in-flight promise is held as well as the result, so a screen that
+ * mounts three components asking for the same edition at once does one
+ * read rather than three. Same shape as `ensureSearchCorpus`.
+ *
+ * Bounded to ONE edition. A reader has a translation, not a library of
+ * them, and the whole point of this move is to stop carrying editions
+ * nobody asked for.
+ */
+let cached: { edition: QuranTranslationId; map: ChapterMap } | null = null;
+let loading: { edition: QuranTranslationId; work: Promise<ChapterMap> } | null =
+  null;
+
+/** Test seam, and what a low-memory warning would call. */
+export function _clearTranslationCache(): void {
+  cached = null;
+  loading = null;
+}
+
+export async function loadTranslation(
+  edition: QuranTranslationId,
+): Promise<ChapterMap> {
+  if (cached?.edition === edition) return cached.map;
+  if (loading?.edition === edition) return loading.work;
+  const work = readEdition(edition).then(map => {
+    cached = { edition, map };
+    if (loading?.edition === edition) loading = null;
+    return map;
+  });
+  loading = { edition, work };
+  return work;
+}
+
+async function readEdition(edition: QuranTranslationId): Promise<ChapterMap> {
   switch (edition) {
     case 'en.sahih':
       // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -138,21 +199,21 @@ export function loadTranslation(edition: QuranTranslationId): ChapterMap {
 }
 
 /** Fetch a single ayah's translation. Returns empty string if missing. */
-export function getAyahTranslation(
+export async function getAyahTranslation(
   edition: QuranTranslationId,
   surah: number,
   ayah: number,
-): string {
-  const map = loadTranslation(edition);
+): Promise<string> {
+  const map = await loadTranslation(edition);
   return map[String(surah)]?.[String(ayah)] ?? '';
 }
 
 /** Fetch the whole surah's translation as an ordered ayah array. */
-export function getSurahTranslation(
+export async function getSurahTranslation(
   edition: QuranTranslationId,
   surah: number,
-): string[] {
-  const map = loadTranslation(edition);
+): Promise<string[]> {
+  const map = await loadTranslation(edition);
   const ayahs = map[String(surah)] ?? {};
   const keys = Object.keys(ayahs)
     .map(k => Number(k))
