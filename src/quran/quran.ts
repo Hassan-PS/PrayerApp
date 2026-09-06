@@ -21,6 +21,9 @@
  * placeholder.
  */
 
+import { Platform } from 'react-native';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+
 /** Public attribution string surfaced on the QuranScreen About row. */
 export const QURAN_ATTRIBUTION =
   'Quran text from Tanzil.net (Uthmani simple-clean), used under ' +
@@ -236,6 +239,72 @@ export function getSurahAyahs(number: number): {
  *
  * Returns null only when `n` is out of range (1..114).
  */
+type SurahData = { arabic: string[]; translation?: string[] };
+
+/**
+ * Two caches, because two callers want opposite things.
+ *
+ * A READER opens one surah, then its neighbour, then back — a small
+ * bounded set, and holding more would be holding the muṣḥaf in memory
+ * for someone reading one page of it.
+ *
+ * A VALIDATOR — the riwayah import checking a downloaded muṣḥaf against
+ * our own corpus — needs any surah, synchronously, in the middle of a
+ * loop it cannot await inside. `verifyRiwayahDataset` is sync all the
+ * way up to the screen that calls it, so rather than turn that whole
+ * path async for a check that runs once per import, the caller warms
+ * what it needs first and releases it after. Explicit, and bounded by
+ * the import rather than by a guess.
+ */
+const surahCache = new Map<number, SurahData>();
+const SURAH_CACHE_MAX = 4;
+const warmed = new Map<number, SurahData>();
+
+/**
+ * Read surahs into memory so `bundledSurahArabic` can answer for them.
+ *
+ * Call before a synchronous walk that needs the corpus, and
+ * `releaseSurahCache` after. Silent on a file it cannot read: a surah
+ * that fails to load simply is not there afterwards, and every caller of
+ * `bundledSurahArabic` already treats absence as "this build cannot
+ * judge that one" and skips it.
+ */
+let warmHolds = 0;
+
+export async function warmSurahCache(
+  surahs?: Iterable<number>,
+): Promise<void> {
+  // Counted, because releasing is not the same as "nobody wants this any
+  // more". Two overlapping walks — or a test that warmed the corpus for
+  // a whole file and an install that warms it again inside — would
+  // otherwise have the inner one's release pull the corpus out from
+  // under the outer one, and every caller of `bundledSurahArabic` reads
+  // absence as "cannot judge, skip". That is a check that passes
+  // everything, silently, which is the worst way for this particular
+  // thing to fail.
+  warmHolds += 1;
+  const wanted =
+    surahs ?? Array.from({ length: 113 }, (_unused, i) => i + 2);
+  for (const n of wanted) {
+    if (warmed.has(n) || SURAH_TEXT[n]) continue;
+    const data = await loadSurahDataFile(n);
+    if (data) warmed.set(n, data);
+  }
+}
+
+/** Drop what `warmSurahCache` read, once the last holder is done. */
+export function releaseSurahCache(): void {
+  warmHolds = Math.max(0, warmHolds - 1);
+  if (warmHolds === 0) warmed.clear();
+}
+
+/** Test seam. */
+export function _clearSurahCache(): void {
+  surahCache.clear();
+  warmed.clear();
+  warmHolds = 0;
+}
+
 export async function loadSurah(n: number): Promise<LoadedSurah | null> {
   const index = findSurah(n);
   if (!index) return null;
@@ -286,146 +355,57 @@ export async function loadSurah(n: number): Promise<LoadedSurah | null> {
  */
 export function bundledSurahArabic(n: number): readonly string[] | null {
   if (SURAH_TEXT[n]) return SURAH_TEXT[n];
-  try {
-    return loadSurahDataFile(n)?.arabic ?? null;
-  } catch {
-    return null;
-  }
+  // Whatever is already in memory. The corpus is read from disk now, and
+  // this cannot wait for it — see the two caches above. A caller that
+  // needs the whole corpus calls `warmSurahCache` first; one that does
+  // not gets null and skips, which is what both of them already do.
+  return (warmed.get(n) ?? surahCache.get(n))?.arabic ?? null;
 }
 
 /**
- * Internal: dynamic import of the per-surah data file. Kept separate so
- * tests can mock it. The data files live under `data/surahs/` and are
- * populated by the import script. Surah 1 is bundled inline for the
- * integrity hash test.
+ * One surah's text, read from the app's own files.
  *
- * Note: Metro doesn't support fully-dynamic require paths, so we use
- * a switch to enumerate the 114 imports. The bundler tree-shakes
- * unloaded surahs only when each branch is a static literal. For the
- * MVP this returns null for all surahs except 1 (which goes through
- * the inline path above); the full switch is filled in by the import
- * script when the corpus arrives.
+ * This was a switch with a hundred and thirteen `require` branches, one
+ * per surah, with a comment explaining that Metro needs literal paths.
+ * It does — and it follows every one of them unconditionally, so all
+ * 2.4 MB shipped inside `index.android.bundle`, which Android stores in
+ * the APK without compressing. The files are assets now and the switch
+ * is a filename: `assets/quran/surahs/002.json`, zero-padded, which is
+ * what the import script has always written.
+ *
+ * Surah 1 never comes here — al-Fatihah is inline in `SURAH_TEXT`, so
+ * the reader's first page needs no read at all.
  */
-function loadSurahDataFile(
+async function loadSurahDataFile(
   n: number,
-): { arabic: string[]; translation?: string[] } | null {
-  // Metro requires literal require paths for tree-shaking; we enumerate
-  // 2..114 explicitly. Surah 1 goes through the inline SURAH_TEXT path
-  // in loadSurah() above. Generated by scripts/quran-import.js.
-  switch (n) {
-    case 2: return require('./data/surahs/002.json');
-    case 3: return require('./data/surahs/003.json');
-    case 4: return require('./data/surahs/004.json');
-    case 5: return require('./data/surahs/005.json');
-    case 6: return require('./data/surahs/006.json');
-    case 7: return require('./data/surahs/007.json');
-    case 8: return require('./data/surahs/008.json');
-    case 9: return require('./data/surahs/009.json');
-    case 10: return require('./data/surahs/010.json');
-    case 11: return require('./data/surahs/011.json');
-    case 12: return require('./data/surahs/012.json');
-    case 13: return require('./data/surahs/013.json');
-    case 14: return require('./data/surahs/014.json');
-    case 15: return require('./data/surahs/015.json');
-    case 16: return require('./data/surahs/016.json');
-    case 17: return require('./data/surahs/017.json');
-    case 18: return require('./data/surahs/018.json');
-    case 19: return require('./data/surahs/019.json');
-    case 20: return require('./data/surahs/020.json');
-    case 21: return require('./data/surahs/021.json');
-    case 22: return require('./data/surahs/022.json');
-    case 23: return require('./data/surahs/023.json');
-    case 24: return require('./data/surahs/024.json');
-    case 25: return require('./data/surahs/025.json');
-    case 26: return require('./data/surahs/026.json');
-    case 27: return require('./data/surahs/027.json');
-    case 28: return require('./data/surahs/028.json');
-    case 29: return require('./data/surahs/029.json');
-    case 30: return require('./data/surahs/030.json');
-    case 31: return require('./data/surahs/031.json');
-    case 32: return require('./data/surahs/032.json');
-    case 33: return require('./data/surahs/033.json');
-    case 34: return require('./data/surahs/034.json');
-    case 35: return require('./data/surahs/035.json');
-    case 36: return require('./data/surahs/036.json');
-    case 37: return require('./data/surahs/037.json');
-    case 38: return require('./data/surahs/038.json');
-    case 39: return require('./data/surahs/039.json');
-    case 40: return require('./data/surahs/040.json');
-    case 41: return require('./data/surahs/041.json');
-    case 42: return require('./data/surahs/042.json');
-    case 43: return require('./data/surahs/043.json');
-    case 44: return require('./data/surahs/044.json');
-    case 45: return require('./data/surahs/045.json');
-    case 46: return require('./data/surahs/046.json');
-    case 47: return require('./data/surahs/047.json');
-    case 48: return require('./data/surahs/048.json');
-    case 49: return require('./data/surahs/049.json');
-    case 50: return require('./data/surahs/050.json');
-    case 51: return require('./data/surahs/051.json');
-    case 52: return require('./data/surahs/052.json');
-    case 53: return require('./data/surahs/053.json');
-    case 54: return require('./data/surahs/054.json');
-    case 55: return require('./data/surahs/055.json');
-    case 56: return require('./data/surahs/056.json');
-    case 57: return require('./data/surahs/057.json');
-    case 58: return require('./data/surahs/058.json');
-    case 59: return require('./data/surahs/059.json');
-    case 60: return require('./data/surahs/060.json');
-    case 61: return require('./data/surahs/061.json');
-    case 62: return require('./data/surahs/062.json');
-    case 63: return require('./data/surahs/063.json');
-    case 64: return require('./data/surahs/064.json');
-    case 65: return require('./data/surahs/065.json');
-    case 66: return require('./data/surahs/066.json');
-    case 67: return require('./data/surahs/067.json');
-    case 68: return require('./data/surahs/068.json');
-    case 69: return require('./data/surahs/069.json');
-    case 70: return require('./data/surahs/070.json');
-    case 71: return require('./data/surahs/071.json');
-    case 72: return require('./data/surahs/072.json');
-    case 73: return require('./data/surahs/073.json');
-    case 74: return require('./data/surahs/074.json');
-    case 75: return require('./data/surahs/075.json');
-    case 76: return require('./data/surahs/076.json');
-    case 77: return require('./data/surahs/077.json');
-    case 78: return require('./data/surahs/078.json');
-    case 79: return require('./data/surahs/079.json');
-    case 80: return require('./data/surahs/080.json');
-    case 81: return require('./data/surahs/081.json');
-    case 82: return require('./data/surahs/082.json');
-    case 83: return require('./data/surahs/083.json');
-    case 84: return require('./data/surahs/084.json');
-    case 85: return require('./data/surahs/085.json');
-    case 86: return require('./data/surahs/086.json');
-    case 87: return require('./data/surahs/087.json');
-    case 88: return require('./data/surahs/088.json');
-    case 89: return require('./data/surahs/089.json');
-    case 90: return require('./data/surahs/090.json');
-    case 91: return require('./data/surahs/091.json');
-    case 92: return require('./data/surahs/092.json');
-    case 93: return require('./data/surahs/093.json');
-    case 94: return require('./data/surahs/094.json');
-    case 95: return require('./data/surahs/095.json');
-    case 96: return require('./data/surahs/096.json');
-    case 97: return require('./data/surahs/097.json');
-    case 98: return require('./data/surahs/098.json');
-    case 99: return require('./data/surahs/099.json');
-    case 100: return require('./data/surahs/100.json');
-    case 101: return require('./data/surahs/101.json');
-    case 102: return require('./data/surahs/102.json');
-    case 103: return require('./data/surahs/103.json');
-    case 104: return require('./data/surahs/104.json');
-    case 105: return require('./data/surahs/105.json');
-    case 106: return require('./data/surahs/106.json');
-    case 107: return require('./data/surahs/107.json');
-    case 108: return require('./data/surahs/108.json');
-    case 109: return require('./data/surahs/109.json');
-    case 110: return require('./data/surahs/110.json');
-    case 111: return require('./data/surahs/111.json');
-    case 112: return require('./data/surahs/112.json');
-    case 113: return require('./data/surahs/113.json');
-    case 114: return require('./data/surahs/114.json');
-    default: return null;
+): Promise<{ arabic: string[]; translation?: string[] } | null> {
+  if (!Number.isInteger(n) || n < 2 || n > 114) return null;
+  const cached = warmed.get(n) ?? surahCache.get(n);
+  if (cached) return cached;
+  const file = `quran/surahs/${String(n).padStart(3, '0')}.json`;
+  const path =
+    Platform.OS === 'android'
+      ? ReactNativeBlobUtil.fs.asset(file)
+      : `${ReactNativeBlobUtil.fs.dirs.MainBundleDir}/${file}`;
+  try {
+    const raw = await ReactNativeBlobUtil.fs.readFile(path, 'utf8');
+    const data = JSON.parse(String(raw)) as {
+      arabic: string[];
+      translation?: string[];
+    };
+    // A handful, not the whole muṣḥaf: a reader moves between adjacent
+    // surahs and back, and re-reading a file per page turn is the one
+    // way this could be slower than the bundle it replaced.
+    surahCache.set(n, data);
+    if (surahCache.size > SURAH_CACHE_MAX) {
+      const oldest = surahCache.keys().next().value;
+      if (oldest !== undefined) surahCache.delete(oldest);
+    }
+    return data;
+  } catch {
+    // Missing or unreadable degrades to the "translation pending"
+    // placeholder in `loadSurah`, which is what the old try/catch there
+    // was already for.
+    return null;
   }
 }

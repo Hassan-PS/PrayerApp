@@ -15,7 +15,11 @@
  * none at all.
  */
 import { MUSHAF_PAGES } from '../src/quran/pages';
-import { SURAHS, bundledSurahArabic } from '../src/quran/quran';
+import {
+  SURAHS,
+  bundledSurahArabic,
+  warmSurahCache,
+} from '../src/quran/quran';
 import { verifyRiwayahDataset } from '../src/quran/riwayahImport';
 import {
   JUZ_COUNT,
@@ -23,6 +27,17 @@ import {
   skeleton,
   vocabularyOverlap,
 } from '../src/quran/juzCheck';
+
+/*
+ * The Qur'an corpus is read from disk now rather than compiled into the
+ * bundle, so a synchronous walk over it has to be warmed first — which is
+ * exactly what `installRiwayahFromText` does around its own verification.
+ * These suites build fixtures from the same corpus, so they warm it too.
+ */
+beforeAll(async () => {
+  await warmSurahCache();
+});
+
 
 const BASMALAH =
   /^بِسْمِ\s*ٱللَّهِ\s*ٱلرَّحْمَٰنِ\s*ٱلرَّحِيمِ\s*/;

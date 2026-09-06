@@ -32,6 +32,7 @@
 import { MUSHAF_PAGES, MUSHAF_SURAHS } from './pages';
 import { installRiwayahDataset } from './riwayahData';
 import { verifyRiwayahDataset } from './riwayahImport';
+import { warmSurahCache, releaseSurahCache } from './quran';
 import type { RiwayahProvenance } from './riwayahStore';
 import type { RiwayahId } from './riwayat';
 
@@ -166,7 +167,22 @@ async function finish(
       : fail('quran.riwayahNotJson', 'That file is not a data file.');
   }
 
-  const verified = verifyRiwayahDataset(raw, MUSHAF_SURAHS, MUSHAF_PAGES);
+  // The corpus this is checked against is read from disk now, and
+  // `verifyRiwayahDataset` is synchronous all the way down — it walks
+  // every ayah of the downloaded muṣḥaf against ours inside loops that
+  // cannot await. Warmed here, where we can, and released below: an
+  // import is the one moment the whole corpus is genuinely needed, and
+  // it is already several hundred megabytes into a download by this
+  // point. Without this the check would find nothing to compare against
+  // and skip every surah — which each caller treats as "this build
+  // cannot judge it", so a broken file would install quietly.
+  await warmSurahCache();
+  let verified: ReturnType<typeof verifyRiwayahDataset>;
+  try {
+    verified = verifyRiwayahDataset(raw, MUSHAF_SURAHS, MUSHAF_PAGES);
+  } finally {
+    releaseSurahCache();
+  }
   if (!verified.ok) {
     return fail(
       'quran.riwayahNotAQuran',
