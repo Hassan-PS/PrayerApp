@@ -8,7 +8,7 @@ Fonctions principales :
 - Boussole qibla avec force du signal et vérification par la position du soleil
 - Lecteur de Coran : le mushaf de Médine tracé à partir des polices de page officielles, en quatre riwayat (Hafs, Warsh, Qalun, Chuʿba), avec 13 traductions et des tafsirs classiques, 42 récitateurs, surlignage mot à mot, outils de mémorisation, signets et plans de khatma
 - Tilawa — l'écoute comme page à part entière : choisissez un récitateur et les sourates s'enchaînent écran éteint, depuis l'écran de verrouillage, avec minuterie d'arrêt, réglage de vitesse et une page de mushaf vivante où le mot récité s'allume
-- Invocations (Hisn al-Muslim), compteur de tasbih, suivi du jeûne, journal de prière avec graphique de pratique et séries, et mosquées à proximité
+- Invocations (Hisn al-Muslim), compteur de tasbih, suivi du jeûne et journal de prière avec graphique de pratique et séries
 - Calendrier hégirien mettant en avant le Ramadan, l'Aïd et le vendredi
 - Synchronisation entre vos propres appareils, sans compte et sans serveur : des fichiers scellés dans un dossier que vous synchronisez déjà
 - Sauvegarde et restauration vers un fichier que vous conservez

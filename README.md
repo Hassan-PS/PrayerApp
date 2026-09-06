@@ -71,7 +71,6 @@
 - **Fasting log** — Tracks Ramadan + voluntary Sunnah fasts (Mondays, Thursdays, Ayyam al-Bidh, Arafah, Ashura, Six of Shawwal) with day-before reminders. Encrypted on-device.
 - **Prayer journal** — Log each prayer as on-time / late / missed / qadha with private notes, a practice graph, streaks and what is owed. Optional "Log prayer" action right on the prayer notification, an end-of-day nudge, and tools to backfill or fill whole months at once.
 - **Hijri calendar** — Throughout, with Ramadan, Eid and Jumuʿah treatments and a Ramadan countdown on Home.
-- **Mosque finder** — One-tap to your maps app with a "mosque" search centred on your location.
 
 ### Yours, and only yours
 

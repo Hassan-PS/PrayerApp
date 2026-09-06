@@ -8,7 +8,7 @@ Viktigaste funktionerna:
 - Qiblakompass med signalstyrka och en kontroll mot solen
 - Koranläsare: Medinamushafen ritad ur de officiella sidtypsnitten, i fyra riwayat (Hafs, Warsh, Qalun, Shu'bah), med 13 översättningar och klassisk tafsir, 42 recitatörer, ordvis markering, memoreringsverktyg, bokmärken och khatmah-planer
 - Tilawah — lyssnandet som en egen sida: välj recitatör och låt sura följa på sura med skärmen släckt, från låsskärmen, med sovtimer, hastighetsreglage och en levande mushafsida där det reciterade ordet lyser upp
-- Duaer (Hisn al-Muslim), tasbihräknare, fasteregister, bönedagbok med praktikgraf och sviter, samt moskéer i närheten
+- Duaer (Hisn al-Muslim), tasbihräknare, fasteregister samt bönedagbok med praktikgraf och sviter
 - Hijrikalender som lyfter fram ramadan, eid och fredagsbönen
 - Synk mellan dina egna enheter utan konto och utan server: förseglade filer i en mapp du redan synkar
 - Säkerhetskopiering och återställning till en fil du själv behåller

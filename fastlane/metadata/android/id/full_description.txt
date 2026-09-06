@@ -8,7 +8,7 @@ Fitur utama:
 - Kompas kiblat dengan kekuatan sinyal dan pemeriksaan silang terhadap matahari
 - Pembaca Quran: mushaf Madinah digambar dari font halaman resmi, dalam empat riwayat (Hafsh, Warsy, Qalun, Syu'bah), dengan 13 terjemahan dan tafsir klasik, 42 qari, penyorotan per kata, alat hafalan, penanda, dan rencana khatam
 - Tilawah — mendengarkan sebagai halaman tersendiri: pilih qari dan biarkan surah mengalir ke surah berikutnya dengan layar mati, dari layar kunci, dengan pengatur waktu tidur, pengatur kecepatan, dan halaman mushaf langsung tempat kata yang dibaca menyala
-- Doa (Hisnul Muslim), penghitung tasbih, catatan puasa, jurnal sholat dengan grafik amalan dan rentetan, serta masjid terdekat
+- Doa (Hisnul Muslim), penghitung tasbih, catatan puasa, serta jurnal sholat dengan grafik amalan dan rentetan
 - Kalender Hijriah dengan penanda Ramadhan, Idulfitri/Iduladha, dan Jumat
 - Sinkronisasi antar perangkat Anda sendiri tanpa akun dan tanpa server: berkas tersegel di folder yang sudah Anda sinkronkan
 - Cadangkan dan pulihkan ke berkas yang Anda simpan sendiri

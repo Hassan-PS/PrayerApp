@@ -8,7 +8,7 @@ Key features:
 - Qibla compass with signal strength and a cross-check against the sun
 - Quran reader: the Madinah mushaf drawn from the official page fonts, in four riwayat (Hafs, Warsh, Qalun, Shu'bah), with 13 translations and classical tafsir, 42 reciters, word-level highlighting, memorisation tools, bookmarks, and khatmah plans
 - Tilawah — listening as its own page: pick a reciter and it plays surah into surah with the screen off, from the lock screen, with a sleep timer, a speed control, and a live mushaf page where the recited word lights up
-- Duas (Hisn al-Muslim), tasbih counter, fasting tracker, prayer journal with a practice graph and streaks, and nearby mosques
+- Duas (Hisn al-Muslim), tasbih counter, fasting tracker, and a prayer journal with a practice graph and streaks
 - Hijri calendar with Ramadan, Eid and Jumu'ah treatments
 - Sync between your own devices with no account and no server: sealed files in a folder you already keep in sync
 - Backup and restore to a file you keep

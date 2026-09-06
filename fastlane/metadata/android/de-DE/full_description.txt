@@ -8,7 +8,7 @@ Wichtigste Funktionen:
 - Qibla-Kompass mit Signalstärke und einer Gegenprobe über den Sonnenstand
 - Koranleser: der Medina-Mushaf aus den offiziellen Seiten-Schriftarten gezeichnet, in vier Riwayat (Hafs, Warsch, Qalun, Schuʿba), mit 13 Übersetzungen und klassischem Tafsir, 42 Rezitatoren, wortgenauer Hervorhebung, Werkzeugen zum Auswendiglernen, Lesezeichen und Khatma-Plänen
 - Tilawa — das Hören als eigene Seite: einen Rezitator wählen, und es läuft Sure für Sure weiter, auch bei ausgeschaltetem Bildschirm und vom Sperrbildschirm aus, mit Sleeptimer, Tempo-Regler und einer lebenden Mushaf-Seite, auf der das rezitierte Wort aufleuchtet
-- Bittgebete (Hisn al-Muslim), Tasbih-Zähler, Fastenprotokoll, Gebetstagebuch mit Praxisdiagramm und Serien sowie Moscheen in der Nähe
+- Bittgebete (Hisn al-Muslim), Tasbih-Zähler, Fastenprotokoll sowie Gebetstagebuch mit Praxisdiagramm und Serien
 - Hidschri-Kalender mit Ramadan, Eid und Dschumuʿa hervorgehoben
 - Abgleich zwischen deinen eigenen Geräten, ohne Konto und ohne Server: versiegelte Dateien in einem Ordner, den du ohnehin synchronisierst
 - Sicherung und Wiederherstellung in eine Datei, die bei dir bleibt

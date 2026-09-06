@@ -8,7 +8,7 @@ Mihrab beş vakit namazı elinizin altında tutar: sıradaki namazı ve canlı g
 - Sinyal gücünü gösteren ve güneşle karşılaştırma sunan kıble pusulası
 - Kuran okuyucu: resmî sayfa yazı tipleriyle çizilen Medine mushafı, dört rivayette (Hafs, Verş, Kalun, Şu'be), 13 meal ve klasik tefsirler, 42 kâri, kelime kelime vurgulama, ezber araçları, yer imleri ve hatim planları
 - Tilavet — dinlemenin kendi sayfası: bir kâri seçin, ekran kapalıyken ve kilit ekranından sure sure çalsın; uyku zamanlayıcısı, hız kontrolü ve okunan kelimenin yandığı canlı mushaf sayfasıyla
-- Dualar (Hısnü'l-Müslim), tesbih sayacı, oruç takibi, pratik grafiği ve serileriyle namaz günlüğü ve yakındaki camiler
+- Dualar (Hısnü'l-Müslim), tesbih sayacı, oruç takibi, pratik grafiği ve serileriyle namaz günlüğü
 - Ramazan, bayram ve cuma vurgularıyla hicri takvim
 - Hesapsız ve sunucusuz, yalnızca kendi cihazlarınız arasında eşitleme: zaten eşitlediğiniz bir klasörde mühürlü dosyalar
 - Sizde kalan bir dosyaya yedekleme ve geri yükleme

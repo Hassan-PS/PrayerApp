@@ -118,9 +118,12 @@ change.
 
 Roughly by value ÷ cost.
 
-- **Mosque finder** — Overpass/OSM query for `amenity=place_of_worship` +
-  `religion=muslim`. No accounts, no API keys. The largest remaining gap
-  against competitors.
+- ~~**Mosque finder**~~ — **decided against, and already removed.** It was
+  built, then cut in v2.8.5: maps apps do it better, and it was the one
+  feature needing a network round-trip in an otherwise offline app
+  (`src/navigation/MainTabs.tsx`). Do not re-propose it without a reason
+  that answers both of those. Note that all 13 Play listings still
+  promised it until 2026-09-06 — copy written after the feature was gone.
 - **Hijri date picker for the month view** — browse a Hijri month, not only a
   Gregorian one.
 - **Wear OS tile and Apple Watch complication** — next prayer plus countdown,
