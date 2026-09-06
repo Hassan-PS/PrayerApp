@@ -29,7 +29,7 @@
 
 <img src="branding/readme/04_tasbih.png" width="32%" alt="Tasbih counter — dhikr with tabular digits">&nbsp;<img src="branding/readme/05_qibla.png" width="32%" alt="Qibla compass — the bearing, the signal strength and a cross-check">&nbsp;<img src="branding/readme/06_journal.png" width="32%" alt="Prayer journal — the practice graph, the on-time streak and what is owed">
 
-<img src="branding/readme/07_tilawah.png" width="32%" alt="Tilawah — a recitation of Al-Baqarah with the reciter, a speed control and a sleep timer">&nbsp;<img src="branding/readme/08_fasting.png" width="32%" alt="Fasting — today's fast, the Ramadan and voluntary counts, and the coming Sunnah days">&nbsp;<img src="branding/readme/09_widgets.png" width="32%" alt="Android home-screen widgets — the day's times with the countdown and practice graph, above the khatmah widget">
+<img src="branding/readme/07_tilawah.png" width="32%" alt="Tilawah — a recitation of Al-Baqarah with the reciter, a speed control and a sleep timer">&nbsp;<img src="branding/readme/08_fasting.png" width="32%" alt="Fasting — today's fast, the Ramadan and voluntary counts, and the coming Sunnah days">&nbsp;<img src="branding/readme/09_widgets.png" width="32%" alt="Android home-screen widgets — the day's times with the countdown and practice graph, above the Log today widget">
 
 </div>
 

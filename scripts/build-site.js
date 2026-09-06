@@ -93,7 +93,13 @@ const BADGES = [
  * only thing a translation has to supply is the alt text and the caption,
  * keyed here so a missing one is an error and not a silently English page.
  */
-const SHOT_V = '?v=2026-09-06';
+/*
+ * Bumped whenever a shot is retaken, INCLUDING a retake on the same day as
+ * the last one — a browser holding the old picture has no way to know the
+ * bytes moved under an unchanged URL, and the widget shots have now been
+ * retaken twice on 2026-09-06.
+ */
+const SHOT_V = '?v=2026-09-06.2';
 const SHOTS = [
   'home',
   'home-maliki',

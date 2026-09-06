@@ -74,7 +74,7 @@
           "cap": "Widgets and the Live Activity"
         },
         "widgets-android": {
-          "alt": "An Android home screen with the prayer-times widget — the day's times, the countdown, the streak and the practice graph — above the khatmah widget.",
+          "alt": "An Android home screen with the prayer-times widget — the day's times, the countdown, the streak and the practice graph — above the Log today widget.",
           "cap": "Android home-screen widgets"
         }
       },
@@ -159,7 +159,7 @@
           "cap": "Widgetar och den levande nedräkningen"
         },
         "widgets-android": {
-          "alt": "En Android-hemskärm med bönetidswidgeten — dagens tider, nedräkningen, sviten och praktikgrafen — ovanför khatmah-widgeten.",
+          "alt": "En Android-hemskärm med bönetidswidgeten — dagens tider, nedräkningen, sviten och praktikgrafen — ovanför widgeten Logga idag.",
           "cap": "Widgetar på Android-hemskärmen"
         }
       },
@@ -349,7 +349,7 @@
           "cap": "الأدوات والنشاط الحيّ"
         },
         "widgets-android": {
-          "alt": "شاشة رئيسية على أندرويد فيها أداة مواقيت الصلاة — مواقيت اليوم والعد التنازلي والمواظبة ورسم المتابعة — فوق أداة الختمة.",
+          "alt": "شاشة رئيسية على أندرويد فيها أداة مواقيت الصلاة — مواقيت اليوم والعد التنازلي والمواظبة ورسم المتابعة — فوق أداة سجل اليوم.",
           "cap": "أدوات الشاشة الرئيسية على أندرويد"
         }
       },
@@ -539,7 +539,7 @@
           "cap": "Widget’lar ve canlı etkinlik"
         },
         "widgets-android": {
-          "alt": "Namaz vakitleri widget'ı bulunan bir Android ana ekranı — günün vakitleri, geri sayım, seri ve takip grafiği — hatim widget'ının üstünde.",
+          "alt": "Namaz vakitleri widget'ı bulunan bir Android ana ekranı — günün vakitleri, geri sayım, seri ve takip grafiği — Bugünü kaydet widget'ının üstünde.",
           "cap": "Android ana ekran widget'ları"
         }
       },
@@ -729,7 +729,7 @@
           "cap": "ویجٹ اور لائیو ایکٹیویٹی"
         },
         "widgets-android": {
-          "alt": "اینڈرائیڈ ہوم اسکرین جس پر نماز اوقات کا وجٹ ہے — دن کے اوقات، الٹی گنتی، تسلسل اور پریکٹس گراف — ختمہ وجٹ کے اوپر۔",
+          "alt": "اینڈرائیڈ ہوم اسکرین جس پر نماز اوقات کا وجٹ ہے — دن کے اوقات، الٹی گنتی، تسلسل اور پریکٹس گراف — ’آج کا اندراج‘ وجٹ کے اوپر۔",
           "cap": "اینڈرائیڈ ہوم اسکرین وجٹ"
         }
       },
@@ -919,7 +919,7 @@
           "cap": "Widget dan Live Activity"
         },
         "widgets-android": {
-          "alt": "Layar utama Android dengan widget waktu salat — waktu hari ini, hitung mundur, rentetan, dan grafik amalan — di atas widget khatmah.",
+          "alt": "Layar utama Android dengan widget waktu salat — waktu hari ini, hitung mundur, rentetan, dan grafik amalan — di atas widget Catat hari ini.",
           "cap": "Widget layar utama Android"
         }
       },
@@ -1109,7 +1109,7 @@
           "cap": "Widgets und die Live-Aktivität"
         },
         "widgets-android": {
-          "alt": "Ein Android-Startbildschirm mit dem Gebetszeiten-Widget — die Zeiten des Tages, der Countdown, die Serie und das Praxisdiagramm — über dem Khatma-Widget.",
+          "alt": "Ein Android-Startbildschirm mit dem Gebetszeiten-Widget — die Zeiten des Tages, der Countdown, die Serie und das Praxisdiagramm — über dem Widget „Heute eintragen“.",
           "cap": "Widgets auf dem Android-Startbildschirm"
         }
       },
@@ -1299,7 +1299,7 @@
           "cap": "Widgets et activité en direct"
         },
         "widgets-android": {
-          "alt": "Un écran d’accueil Android avec le widget des horaires — les heures du jour, le compte à rebours, la série et le graphique de pratique — au-dessus du widget khatma.",
+          "alt": "Un écran d’accueil Android avec le widget des horaires — les heures du jour, le compte à rebours, la série et le graphique de pratique — au-dessus du widget « Journal du jour ».",
           "cap": "Widgets sur l’écran d’accueil Android"
         }
       },
@@ -1489,7 +1489,7 @@
           "cap": "Widgets y actividad en directo"
         },
         "widgets-android": {
-          "alt": "Una pantalla de inicio de Android con el widget de horarios — las horas del día, la cuenta atrás, la racha y el gráfico de práctica — sobre el widget de la jatma.",
+          "alt": "Una pantalla de inicio de Android con el widget de horarios — las horas del día, la cuenta atrás, la racha y el gráfico de práctica — sobre el widget «Registrar hoy».",
           "cap": "Widgets en la pantalla de inicio de Android"
         }
       },
@@ -1679,7 +1679,7 @@
           "cap": "Виджеты и живой отсчёт"
         },
         "widgets-android": {
-          "alt": "Домашний экран Android с виджетом времён молитв — времена дня, обратный отсчёт, серия и график практики — над виджетом хатмы.",
+          "alt": "Домашний экран Android с виджетом времён молитв — времена дня, обратный отсчёт, серия и график практики — над виджетом «Отметить намазы».",
           "cap": "Виджеты на домашнем экране Android"
         }
       },
@@ -1869,7 +1869,7 @@
           "cap": "উইজেট আর লাইভ অ্যাক্টিভিটি"
         },
         "widgets-android": {
-          "alt": "অ্যান্ড্রয়েড হোম স্ক্রিনে নামাজের সময়ের উইজেট — দিনের সময়, কাউন্টডাউন, ধারাবাহিকতা ও অনুশীলন গ্রাফ — খতমের উইজেটের ওপরে।",
+          "alt": "অ্যান্ড্রয়েড হোম স্ক্রিনে নামাজের সময়ের উইজেট — দিনের সময়, কাউন্টডাউন, ধারাবাহিকতা ও অনুশীলন গ্রাফ — ‘আজকের লগ’ উইজেটের ওপরে।",
           "cap": "অ্যান্ড্রয়েড হোম স্ক্রিনের উইজেট"
         }
       },
@@ -2059,7 +2059,7 @@
           "cap": "विजेट और लाइव गतिविधि"
         },
         "widgets-android": {
-          "alt": "एंड्रॉइड होम स्क्रीन पर नमाज़ के समय का विजेट — दिन के समय, उलटी गिनती, सिलसिला और अभ्यास ग्राफ़ — ख़त्म विजेट के ऊपर।",
+          "alt": "एंड्रॉइड होम स्क्रीन पर नमाज़ के समय का विजेट — दिन के समय, उलटी गिनती, सिलसिला और अभ्यास ग्राफ़ — ‘आज दर्ज करें’ विजेट के ऊपर।",
           "cap": "एंड्रॉइड होम स्क्रीन विजेट"
         }
       },
@@ -2249,7 +2249,7 @@
           "cap": "小组件与实时活动"
         },
         "widgets-android": {
-          "alt": "安卓主屏幕上的礼拜时间小组件——当天时刻、倒计时、连续天数与练习图——位于诵读全本小组件之上。",
+          "alt": "安卓主屏幕上的礼拜时间小组件——当天时刻、倒计时、连续天数与练习图——位于“记录今日”小组件之上。",
           "cap": "安卓主屏幕小组件"
         }
       },
