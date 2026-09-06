@@ -1,0 +1,3 @@
+• Send a dua or a passage of tafsir to someone, as text — with its source, and in the language you are reading it in.
+• The Continue Reading widget has a play button: one tap opens where you left off and starts the recitation there.
+• Fixed: a prayer time could break across two lines on some system fonts; the tasbih widget slowed down as the count grew; the reading widget cut off its last line at its default size; a Qur'an download could hang instead of failing.

@@ -1,0 +1,3 @@
+• Skicka en dua eller ett stycke tafsir till någon, som text — med källa, och på språket du läser på.
+• Widgeten Fortsätt läsa har en uppspelningsknapp: ett tryck öppnar där du slutade och startar recitationen där.
+• Rättat: en bönetid kunde brytas över två rader med vissa systemtypsnitt; tasbih-widgeten blev långsammare ju högre räkningen steg; läswidgeten klippte sista raden i sin standardstorlek; en Koran-nedladdning kunde hänga sig i stället för att misslyckas.
