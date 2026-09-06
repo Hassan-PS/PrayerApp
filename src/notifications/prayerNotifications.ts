@@ -1,7 +1,5 @@
 import notifee, {
-  AlarmType,
   AndroidImportance,
-  AndroidNotificationSetting,
   AndroidStyle,
   AuthorizationStatus,
   TriggerType,
@@ -38,6 +36,16 @@ import { prayerAlertActions } from './prayerAlertActions';
 import { JOURNAL_LOG_ACTION_ID } from './prayerLogAction';
 import { AdhanPlayer } from '../native/AdhanPlayer';
 import { getNextAlertOverride, overrideAppliesTo } from './adhanMute';
+import {
+  buildTimestampTrigger,
+  canUseExactAlarms,
+  clampPrePrayerReminderMinutes,
+} from './scheduling';
+
+// Re-exported: this was its home before the Live Activity's button became
+// a second writer of the same alerts and the primitives had to move
+// somewhere neither module imports the other from.
+export { clampPrePrayerReminderMinutes };
 import type { TimingsMap } from '../types/prayer';
 import {
   loggedByDate,
@@ -262,69 +270,6 @@ function iosNotificationsAllowed(status: AuthorizationStatus): boolean {
     status === AuthorizationStatus.AUTHORIZED ||
     status === AuthorizationStatus.PROVISIONAL
   );
-}
-
-/** Re-check exact-alarm permission. Android can revoke SCHEDULE_EXACT_ALARM
- *  at runtime; this MUST be called close to scheduling, not just at boot.
- */
-async function canUseExactAlarms(): Promise<boolean> {
-  if (Platform.OS !== 'android') {
-    return true;
-  }
-  const settings = await notifee.getNotificationSettings();
-  return settings.android.alarm === AndroidNotificationSetting.ENABLED;
-}
-
-function buildTimestampTrigger(
-  timestamp: number,
-  exactAlarms: boolean,
-): {
-  type: typeof TriggerType.TIMESTAMP;
-  timestamp: number;
-  alarmManager?: { type: AlarmType };
-} {
-  const trigger = {
-    type: TriggerType.TIMESTAMP as const,
-    timestamp,
-  };
-  if (Platform.OS === 'android') {
-    // Always ride AlarmManager on Android (v2.7.28). Without this,
-    // notifee schedules through WorkManager, which aggressive OEM
-    // battery managers (MIUI, One UI, etc.) defer by minutes — a late
-    // adhan is a broken adhan. Exact when the user granted exact-alarm
-    // access; otherwise the inexact allow-while-idle variant, which
-    // needs no permission and is still far more punctual than WM.
-    Object.assign(trigger, {
-      alarmManager: {
-        type: exactAlarms
-          ? AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE
-          : AlarmType.SET_AND_ALLOW_WHILE_IDLE,
-      },
-    });
-  }
-  return trigger;
-}
-
-/**
- * Clamp the pre-prayer reminder offset to a sane range.
- *
- * Defense-in-depth: settings.coercePrePrayerReminderMinutes already restricts
- * input to a discrete option list, but corrupted AsyncStorage, type-bypass
- * paths, or future callers might pass negative numbers, NaN, Infinity, or
- * absurdly large values. Negative reminders would fire AFTER the prayer
- * (the bug called out in task #3); huge values would create reminders many
- * hours before. Clamp to [0, 60] and reject non-finite input.
- *
- * @returns an integer in [0, 60]. Returns 0 for any invalid input.
- */
-export function clampPrePrayerReminderMinutes(value: unknown): number {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return 0;
-  }
-  const n = Math.floor(value);
-  if (n <= 0) return 0;
-  if (n >= 60) return 60;
-  return n;
 }
 
 /**

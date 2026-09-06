@@ -52,9 +52,18 @@
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
-import notifee, { AndroidImportance, TriggerType } from '@notifee/react-native';
+import notifee, { AndroidImportance, AndroidStyle } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isNonPrayerEvent } from '../types/prayer';
+import i18n from '../i18n';
+import { loadSettings } from '../settings/storage';
+import { setActiveClockFormat, activeClock } from '../utils/activeClock';
+import {
+  buildTimestampTrigger,
+  canUseExactAlarms,
+  clampPrePrayerReminderMinutes,
+  preReminderId,
+} from './scheduling';
 import { modesFor, type PrayerAlertMode } from '../settings/alertModes';
 
 /**
@@ -254,6 +263,80 @@ function modeFromTaskData(data: AdhanMuteTaskData, name: string): PrayerAlertMod
   return muted ? 'notification' : allowedMode(name, 'adhan');
 }
 
+const plainChannelOf = (data: AdhanMuteTaskData) =>
+  data.defaultChannelId || DEFAULT_CHANNEL;
+
+/**
+ * Cancel or re-create the heads-up that belongs to this occurrence.
+ *
+ * Its instant is arithmetic on the event's — the scheduler subtracts the
+ * same offset — so this can address the very alert the scheduler wrote,
+ * by id, without being told which one it is.
+ *
+ * The copy is built here rather than carried in the payload. A prayer's
+ * reminder reads the same whichever prayer it is; a night mark's carries
+ * its own clock time, and this is the only place that reliably knows
+ * WHICH event is being changed — the payload's copy was written for
+ * whatever was next when the app last synced, and the card walks on
+ * without it.
+ */
+async function syncPreReminder(
+  epoch: number,
+  name: string,
+  mode: PrayerAlertMode,
+  channelId: string,
+  exactAlarms: boolean,
+): Promise<void> {
+  try {
+    const settings = await loadSettings();
+    // The non-React edge, same as the widget's headless republish: the
+    // provider that normally mirrors this preference never mounts here.
+    setActiveClockFormat(settings.clockFormat);
+    const minutes = clampPrePrayerReminderMinutes(
+      settings.prePrayerReminderMinutes,
+    );
+    // Nothing to keep in step when the reminder is switched off, which is
+    // the default.
+    if (minutes <= 0) return;
+    const id = preReminderId(epoch, name, minutes);
+    const at = epoch - minutes * 60_000;
+
+    if (mode === 'silent') {
+      await notifee.cancelTriggerNotification(id).catch(() => undefined);
+      return;
+    }
+    // Coming off silent. Past its own moment there is nothing to put
+    // back — and scheduling into the past would fire it immediately.
+    if (at <= Date.now()) return;
+
+    const body = isNonPrayerEvent(name)
+      ? `${activeClock().fromDate(new Date(epoch))} · ${i18n.t(
+          'alertCopy.prePrayer',
+          { count: minutes },
+        )}`
+      : i18n.t('alertCopy.prePrayer', { count: minutes });
+
+    await notifee.createTriggerNotification(
+      {
+        id,
+        title: i18n.t(`prayer.${name}`, { defaultValue: name }),
+        body,
+        android: {
+          channelId,
+          smallIcon: 'ic_stat_prayer',
+          pressAction: { id: 'default' },
+          style: { type: AndroidStyle.BIGTEXT, text: body },
+          timeoutAfter: Math.max(60_000, minutes * 60_000),
+        },
+      },
+      buildTimestampTrigger(at, exactAlarms),
+    );
+  } catch (e) {
+    // Never the reason the mode itself fails to apply.
+    console.warn('[adhanMute] pre-reminder sync failed', e);
+  }
+}
+
 /**
  * HeadlessJS task body. Puts the upcoming event's alert on the channel
  * its new mode asks for — or takes the alarm away entirely — and
@@ -278,6 +361,21 @@ export async function adhanMuteToggleTask(
     if (epoch <= Date.now()) return;
 
     const id = `${PRAYER_NOTIFICATION_ID_PREFIX}${epoch}-${name}`;
+    // Asked for here rather than assumed: Android can revoke
+    // SCHEDULE_EXACT_ALARM at runtime, and this task can run days after
+    // the app last checked.
+    const exactAlarms = await canUseExactAlarms();
+
+    // ── THE HEADS-UP GOES WITH IT ───────────────────────────────────
+    //
+    // The 15-minute reminder is a separate alert with its own id, and it
+    // used to be left alone here — the resync would catch up eventually.
+    // Eventually is the problem: the case this whole control exists for is
+    // silencing an early Fajr the night before, and the phone then stays
+    // locked until morning. The prayer was silent and the reminder went
+    // off fifteen minutes before it anyway, which is the opposite of what
+    // the user asked for and louder than doing nothing.
+    await syncPreReminder(epoch, name, mode, plainChannelOf(data), exactAlarms);
 
     if (mode === 'silent') {
       // Not a muted alarm — no alarm. Same as the home row, and the only
@@ -316,7 +414,7 @@ export async function adhanMuteToggleTask(
     // is the second half of the same guard, on the channel itself.
     const isPrayer = !isNonPrayerEvent(name);
     const wantsAdhan = mode === 'adhan' && isPrayer;
-    const plain = data.defaultChannelId || DEFAULT_CHANNEL;
+    const plain = plainChannelOf(data);
     const channelId = wantsAdhan
       ? await usable(data.adhanChannelId || plain, plain)
       : await usable(plain, DEFAULT_CHANNEL);
@@ -338,11 +436,7 @@ export async function adhanMuteToggleTask(
           importance: AndroidImportance.HIGH,
         },
       },
-      {
-        type: TriggerType.TIMESTAMP,
-        timestamp: epoch,
-        alarmManager: { allowWhileIdle: true },
-      },
+      buildTimestampTrigger(epoch, exactAlarms),
     );
   } catch (e) {
     console.warn('[adhanMute] override task failed', e);

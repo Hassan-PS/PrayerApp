@@ -20,6 +20,8 @@
  *     flag;
  *   - a week of it, with the app never opened.
  */
+import { readFileSync } from 'fs';
+import path from 'path';
 import { Platform } from 'react-native';
 import {
   buildUpcomingSalahEvents,
@@ -56,6 +58,7 @@ jest.mock('../src/settings/storage', () => ({
 import notifee from '@notifee/react-native';
 import { syncLiveActivity } from '../src/liveActivity/syncLiveActivity';
 import { adhanMuteToggleTask } from '../src/notifications/adhanMute';
+import { preReminderId } from '../src/notifications/scheduling';
 
 /** Must match PRAYER_NOTIFICATION_ID_PREFIX in prayerNotifications.ts. */
 const PREFIX = 'pt-';
@@ -299,5 +302,115 @@ describe('the alert still arrives when the channel does not', () => {
     });
     await adhanMuteToggleTask(base as never);
     expect(created().android.channelId).toBe('prayer-times-default');
+  });
+});
+
+
+describe('the heads-up goes with the prayer it belongs to', () => {
+  /*
+   * The 15-minute reminder is a separate alert with its own id, and the
+   * task used to leave it alone — the next full resync would catch up.
+   * Eventually is the problem: the case this control exists for is
+   * silencing an early Fajr the night before, and the phone then stays
+   * locked until morning. The prayer was silent and the reminder went off
+   * fifteen minutes before it anyway.
+   */
+  const calls = () =>
+    (notifee.createTriggerNotification as jest.Mock).mock.calls.map(c => c[0]);
+  const cancelled = () =>
+    (notifee.cancelTriggerNotification as jest.Mock).mock.calls.map(c => c[0]);
+
+  const FAJR = new Date(2026, 8, 8, 3, 36, 0, 0).getTime();
+  const base = {
+    epoch: FAJR,
+    name: 'Fajr',
+    adhanChannelId: 'prayer-times-adhan-makkah',
+    defaultChannelId: 'prayer-times-default',
+    title: 'Fajr',
+    body: 'Prayer time',
+    adhanSoundId: 'adhan_makkah',
+  };
+
+  beforeEach(() => {
+    (notifee.createTriggerNotification as jest.Mock).mockClear();
+    (notifee.cancelTriggerNotification as jest.Mock).mockClear();
+    jest.spyOn(Date, 'now').mockReturnValue(
+      new Date(2026, 8, 7, 22, 30, 0, 0).getTime(),
+    );
+    settings.prePrayerReminderMinutes = 15;
+  });
+  afterEach(() => {
+    (Date.now as jest.Mock).mockRestore?.();
+    settings.prePrayerReminderMinutes = 0;
+  });
+
+  it('cancels it when the occurrence goes silent', async () => {
+    await adhanMuteToggleTask({ ...base, mode: 'silent' } as never);
+    expect(cancelled()).toContain(preReminderId(FAJR, 'Fajr', 15));
+    // And the prayer's own alert, which is what silent means.
+    expect(cancelled()).toContain(`pt-${FAJR}-Fajr`);
+  });
+
+  it('puts it back when the occurrence comes off silent', async () => {
+    await adhanMuteToggleTask({ ...base, mode: 'adhan' } as never);
+    const pre = calls().find(n => n.id === preReminderId(FAJR, 'Fajr', 15));
+    expect(pre).toBeTruthy();
+    // The plain tone, never the adhan: a heads-up is not the call to prayer.
+    expect(pre.android.channelId).toBe('prayer-times-default');
+  });
+
+  it('addresses the id the scheduler wrote', () => {
+    // The scheduler names it after the REMINDER's own instant; this is
+    // the same subtraction, in the one place both can reach.
+    expect(preReminderId(FAJR, 'Fajr', 15)).toBe(
+      `pt-pre-${FAJR - 15 * 60_000}-Fajr`,
+    );
+  });
+
+  it('does nothing at all when the reminder is switched off', async () => {
+    // Which is the default.
+    settings.prePrayerReminderMinutes = 0;
+    await adhanMuteToggleTask({ ...base, mode: 'silent' } as never);
+    expect(cancelled().filter(id => String(id).startsWith('pt-pre-'))).toEqual(
+      [],
+    );
+  });
+
+  it('does not schedule one into the past', async () => {
+    (Date.now as jest.Mock).mockReturnValue(FAJR - 60_000);
+    await adhanMuteToggleTask({ ...base, mode: 'adhan' } as never);
+    expect(
+      calls().find(n => String(n.id).startsWith('pt-pre-')),
+    ).toBeUndefined();
+  });
+});
+
+describe('both writers put an alert on the clock the same way', () => {
+  it('the task rides the scheduler’s own trigger builder', () => {
+    // The scheduler asks AlarmManager for the exact type when the
+    // permission is granted and the inexact allow-while-idle type when it
+    // is not. The task passed a hand-written `{ allowWhileIdle: true }`
+    // that asked for neither — so a prayer re-created by the card's button
+    // could be less punctual than the same prayer scheduled a minute
+    // earlier by the app.
+    const ts = readFileSync(
+      path.join(__dirname, '..', 'src/notifications/adhanMute.ts'),
+      'utf-8',
+    );
+    expect(ts).toContain('buildTimestampTrigger(epoch, exactAlarms)');
+    expect(ts).not.toContain('allowWhileIdle');
+    expect(ts).toContain('await canUseExactAlarms()');
+  });
+
+  it('and neither module imports the other to get it', () => {
+    // `prayerNotifications` already reads the override out of
+    // `adhanMute`; exporting the trigger back the other way would close a
+    // cycle between them.
+    const sched = readFileSync(
+      path.join(__dirname, '..', 'src/notifications/scheduling.ts'),
+      'utf-8',
+    );
+    expect(sched).not.toContain("from './prayerNotifications'");
+    expect(sched).not.toContain("from './adhanMute'");
   });
 });
