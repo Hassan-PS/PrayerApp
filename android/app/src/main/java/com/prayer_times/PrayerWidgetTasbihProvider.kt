@@ -86,18 +86,13 @@ class PrayerWidgetTasbihProvider : AppWidgetProvider() {
     }
 
     private fun tasbih(context: Context): JSONObject? {
-      val raw = context
-        .getSharedPreferences(PrayerWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(PrayerWidgetProvider.PREFS_KEY, null) ?: return null
-      return try {
-        val root = JSONObject(raw)
+      // Parsed once per version of the payload rather than once per
+      // redraw — see PrayerWidgetProvider.payload.
+      val root = PrayerWidgetProvider.payload(context) ?: return null
         // The counts survive, but "Today 231" from a payload written weeks
         // ago is some other day's total. Same rule.
-        if (PrayerWidgetProvider.payloadHasExpired(root)) null
-        else root.optJSONObject("tasbih")
-      } catch (_: Exception) {
-        null
-      }
+      if (PrayerWidgetProvider.payloadHasExpired(root)) return null
+      return root.optJSONObject("tasbih")
     }
 
     fun buildViews(base: Context): RemoteViews {

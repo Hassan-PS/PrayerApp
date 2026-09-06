@@ -136,21 +136,15 @@ open class PrayerWidgetLogProvider : AppWidgetProvider() {
     }
 
     private fun payloadRoot(context: Context): JSONObject? {
-      val raw = context
-        .getSharedPreferences(PrayerWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(PrayerWidgetProvider.PREFS_KEY, null)
-        ?: return null
-      return try {
-        val root = JSONObject(raw)
-        // A payload whose schedule has run out still carries a `today`
-        // block, dated whenever the app was last opened. Rendering it would
-        // offer that day's prayers as today's, and a tap would queue a log
-        // against THAT date — a status on a day the user never touched.
-        // See PrayerWidgetProvider.payloadHasExpired.
-        if (PrayerWidgetProvider.payloadHasExpired(root)) null else root
-      } catch (_: Exception) {
-        null
-      }
+      // Parsed once per version of the payload rather than once per
+      // redraw — see PrayerWidgetProvider.payload.
+      val root = PrayerWidgetProvider.payload(context) ?: return null
+      // A payload whose schedule has run out still carries a `today`
+      // block, dated whenever the app was last opened. Rendering it would
+      // offer that day's prayers as today's, and a tap would queue a log
+      // against THAT date — a status on a day the user never touched.
+      // See PrayerWidgetProvider.payloadHasExpired.
+      return if (PrayerWidgetProvider.payloadHasExpired(root)) null else root
     }
 
     /**

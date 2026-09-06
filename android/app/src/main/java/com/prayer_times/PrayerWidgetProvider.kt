@@ -1165,6 +1165,50 @@ open class PrayerWidgetProvider : AppWidgetProvider() {
      * than the multi-day window cannot be checked and is by now certainly
      * older than this problem.
      */
+    /**
+     * The published payload, parsed at most once per version of it.
+     *
+     * Every widget that draws reads this string and calls `JSONObject(raw)`
+     * on it, and a tap on the Tasbih widget redraws every one of them. The
+     * payload carries a month of days, so that parse is the largest single
+     * cost in a redraw, and it was being paid per widget per tap to produce
+     * an object identical to the one produced a millisecond earlier.
+     *
+     * Keyed on the raw string by IDENTITY OF CONTENT, so a stale answer is
+     * not possible: if the app has republished, the string differs and the
+     * cache misses. That is the only invalidation rule there is, and it does
+     * not depend on anyone remembering to clear anything.
+     *
+     * Widgets run in the app's own process here, so this is one field, not
+     * an IPC. Synchronized because a broadcast receiver and the app's own
+     * republish can both land on it.
+     */
+    private var cachedRaw: String? = null
+    private var cachedPayload: JSONObject? = null
+
+    @Synchronized
+    fun payload(context: Context): JSONObject? {
+      val raw = context
+        .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        .getString(PREFS_KEY, null) ?: return null
+      if (raw == cachedRaw) return cachedPayload
+      val parsed = try {
+        JSONObject(raw)
+      } catch (_: Exception) {
+        null
+      }
+      cachedRaw = raw
+      cachedPayload = parsed
+      return parsed
+    }
+
+    /** For tests, and for anything that must not see a previous parse. */
+    @Synchronized
+    fun clearPayloadCache() {
+      cachedRaw = null
+      cachedPayload = null
+    }
+
     fun payloadHasExpired(o: JSONObject): Boolean {
       val days = o.optJSONArray("days") ?: return true
       if (days.length() == 0) return true

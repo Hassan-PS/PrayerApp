@@ -29,9 +29,47 @@ enum WidgetTasbihQueue {
   static let key = "widget_tasbih_queue"
   static let actions = ["inc", "reset", "next"]
 
+  /// One action, and how many times it was tapped in a row.
+  ///
+  /// A run is one record whose count goes up rather than a record per bead,
+  /// so a tap costs the same on bead three thousand as on bead one. `t` is
+  /// the run's NEWEST tap, so a sitting that crosses the fortnight cutoff is
+  /// not thrown away while it is still being counted. Mirrors
+  /// `widgetTasbihQueue.ts`, which is where the rules are decided.
   struct Entry: Codable, Equatable {
     let a: String
     let t: Double
+    /// Absent means one tap — every entry written before runs existed.
+    var n: Int?
+  }
+
+  /// A bound on what a corrupted queue can ask the drain to replay, not a
+  /// limit anyone counting can reach. Mirrors MAX_TASBIH_RUN.
+  static let maxRun = 100_000
+
+  static func runLength(_ e: Entry) -> Int { min(maxRun, max(1, e.n ?? 1)) }
+
+  /// Fold every run of adjacent `+1`s into one entry.
+  ///
+  /// ADJACENT is the whole rule: `inc inc next inc` is two beads on one
+  /// dhikr and one on the next. Run over the whole queue on every append,
+  /// so a queue written by an older build — a record per bead — is left
+  /// compact by the first tap after an update rather than carrying the old
+  /// cost for as long as it survives.
+  static func compact(_ entries: [Entry]) -> [Entry] {
+    var out: [Entry] = []
+    for e in entries {
+      if e.a == "inc", let last = out.last, last.a == "inc" {
+        out[out.count - 1] = Entry(
+          a: "inc",
+          t: max(last.t, e.t),
+          n: min(maxRun, runLength(last) + runLength(e))
+        )
+      } else {
+        out.append(e)
+      }
+    }
+    return out
   }
 
   private static func defaults() -> UserDefaults? { UserDefaults(suiteName: kSuite) }
@@ -67,7 +105,10 @@ enum WidgetTasbihQueue {
   /// distinction cost the first time.
   static func append(_ action: String, now: Double = Date().timeIntervalSince1970 * 1000) {
     guard actions.contains(action) else { return }
-    let next = (read() + [Entry(a: action, t: now)]).suffix(maxEntries).map { $0 }
+    // A `+1` on the back of a `+1` bumps the run rather than starting a
+    // second record: two taps are still two beads, they are just written
+    // down together. Only `inc` coalesces — two Nexts move two presets on.
+    let next = compact(read() + [Entry(a: action, t: now)]).suffix(maxEntries).map { $0 }
     guard let data = try? JSONEncoder().encode(next),
           let s = String(data: data, encoding: .utf8)
     else {
@@ -176,6 +217,7 @@ struct TasbihProvider: TimelineProvider {
     var counts = t.counts
     var todayTotal = t.todayTotal
     for e in queue {
+      let times = WidgetTasbihQueue.runLength(e)
       switch e.a {
       case "inc":
         let current = index < counts.count ? counts[index] : 0
@@ -183,13 +225,20 @@ struct TasbihProvider: TimelineProvider {
         // moved inside this very loop — see the arrays on the payload.
         let target = t.targets?[safe: index] ?? t.target
         let unbounded = t.unboundedFlags?[safe: index] ?? t.unbounded
-        if !unbounded, target > 0, current >= target { break }
-        if index < counts.count { counts[index] = current + 1 }
-        todayTotal += 1
+        // Arithmetic rather than a loop, landing on exactly what the loop
+        // landed on: a run of a thousand against a target three away adds
+        // three.
+        let room = (!unbounded && target > 0) ? max(0, target - current) : times
+        let applied = min(times, room)
+        if applied > 0 {
+          if index < counts.count { counts[index] = current + applied }
+          todayTotal += applied
+        }
       case "reset":
+        // Resetting twice is resetting.
         if index < counts.count { counts[index] = 0 }
       case "next":
-        index = t.total > 0 ? (index + 1) % t.total : index
+        index = t.total > 0 ? (index + times) % t.total : index
       default:
         break
       }

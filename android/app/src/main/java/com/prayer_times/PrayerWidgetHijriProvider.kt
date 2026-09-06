@@ -63,18 +63,13 @@ class PrayerWidgetHijriProvider : AppWidgetProvider() {
     }
 
     private fun hijri(context: Context): JSONObject? {
-      val raw = context
-        .getSharedPreferences(PrayerWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(PrayerWidgetProvider.PREFS_KEY, null) ?: return null
-      return try {
-        val root = JSONObject(raw)
+      // Parsed once per version of the payload rather than once per
+      // redraw — see PrayerWidgetProvider.payload.
+      val root = PrayerWidgetProvider.payload(context) ?: return null
         // Stating the wrong date is the only way this widget can be wrong,
         // and an expired payload states exactly that. Same rule.
-        if (PrayerWidgetProvider.payloadHasExpired(root)) null
-        else root.optJSONObject("hijri")
-      } catch (_: Exception) {
-        null
-      }
+      if (PrayerWidgetProvider.payloadHasExpired(root)) return null
+      return root.optJSONObject("hijri")
     }
 
     fun buildViews(base: Context): RemoteViews {

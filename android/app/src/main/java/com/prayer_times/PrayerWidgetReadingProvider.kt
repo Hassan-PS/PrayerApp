@@ -95,18 +95,13 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
     private const val SIDE_COLUMN_MIN_WIDTH_DP = 200
 
     private fun reading(context: Context): JSONObject? {
-      val raw = context
-        .getSharedPreferences(PrayerWidgetProvider.PREFS_NAME, Context.MODE_PRIVATE)
-        .getString(PrayerWidgetProvider.PREFS_KEY, null) ?: return null
-      return try {
-        val root = JSONObject(raw)
+      // Parsed once per version of the payload rather than once per
+      // redraw — see PrayerWidgetProvider.payload.
+      val root = PrayerWidgetProvider.payload(context) ?: return null
         // Least wrong of the four when stale — "last read 40 days ago" is
         // true — but a khatmah's "today's portion" is not. Same rule.
-        if (PrayerWidgetProvider.payloadHasExpired(root)) null
-        else root.optJSONObject("reading")
-      } catch (_: Exception) {
-        null
-      }
+      if (PrayerWidgetProvider.payloadHasExpired(root)) return null
+      return root.optJSONObject("reading")
     }
 
     /** Two launcher rows: room for the bar and the lines under it. */
