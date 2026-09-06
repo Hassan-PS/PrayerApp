@@ -109,12 +109,14 @@ describe('wiring that would fail silently if it drifted', () => {
   it('only the adhan gets the alarm twin', () => {
     const ts = read('src/notifications/prayerNotifications.ts');
     // The gate is `wantsAdhan`, and `wantsAdhan` is the whole claim: a
-    // real prayer, not muted for this one occurrence, and set to the
-    // adhan by its own row (v2.14.5 — before that the mode was global,
-    // so being a prayer at all was the whole test).
+    // real prayer, set to the adhan for THIS occurrence (v2.14.5 — before
+    // that the mode was global, so being a prayer at all was the whole
+    // test). `modeAt` is what folds the Live Activity's one-off override
+    // into that answer; a rewrite that went back to the standing mode
+    // would give the alarm stream to a prayer the card had just silenced.
     expect(ts).toMatch(/useAlarmStream && wantsAdhan/);
     expect(ts).toMatch(
-      /const wantsAdhan =\s*\n?\s*!isNonPrayer && !isMutedNext && modeOf\(e\.name\) === 'adhan'/,
+      /const wantsAdhan =\s*\n?\s*!isNonPrayer && modeAt\(e\.name, e\.at\.getTime\(\)\) === 'adhan'/,
     );
   });
 

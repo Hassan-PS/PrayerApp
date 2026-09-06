@@ -37,7 +37,7 @@ import { ADHAN_CONTROLS_CATEGORY_ID } from './adhanActionIds';
 import { prayerAlertActions } from './prayerAlertActions';
 import { JOURNAL_LOG_ACTION_ID } from './prayerLogAction';
 import { AdhanPlayer } from '../native/AdhanPlayer';
-import { getMutedNextAdhan } from './adhanMute';
+import { getNextAlertOverride, overrideAppliesTo } from './adhanMute';
 import type { TimingsMap } from '../types/prayer';
 import {
   loggedByDate,
@@ -626,10 +626,12 @@ export async function syncPrayerNotifications(params: {
   const reminderSound = getNotificationSoundOption('default');
   const exactAlarms = await canUseExactAlarms();
   const now = new Date();
-  // "Mute next adhan" marker ("<epochMs>-<name>") set from the Live Activity
-  // toggle. The matching prayer is scheduled with the plain default sound so a
-  // full resync (e.g. on app focus) doesn't undo the mute.
-  const mutedNextAdhan = await getMutedNextAdhan();
+  // The Live Activity's one-occurrence override — the card's action button
+  // sets the upcoming event to adhan / alert / silent for that time only.
+  // Read here so a full resync (app focus, a settings change, the daily
+  // rearm) rebuilds that one alert the way the button left it instead of
+  // flattening it back to the standing per-prayer mode.
+  const nextAlertOverride = await getNextAlertOverride();
   // ── Per-row modes (v2.14.5) ─────────────────────────────────────────
   //
   // `adhanChosen` is the old global answer, and it is what a row falls
@@ -637,8 +639,21 @@ export async function syncPrayerNotifications(params: {
   // it did until somebody actually changes a row.
   const alertModes = params.alertModes ?? {};
   const adhanChosen = params.notificationSound !== 'default';
-  const modeOf = (name: string) =>
+  const standingModeOf = (name: string) =>
     alertModeFor(name, alertModes, adhanChosen);
+  /**
+   * What this OCCURRENCE sounds like.
+   *
+   * The standing per-prayer mode, unless the Live Activity's button spoke
+   * for this exact instant. Every consumer below goes through here — the
+   * audible filter included, because "silent" has to mean no alarm is
+   * registered rather than a quiet one, and that decision is made when
+   * the list is built rather than when a row is written.
+   */
+  const modeAt = (name: string, atMs: number) =>
+    overrideAppliesTo(nextAlertOverride, atMs, name)
+      ? (nextAlertOverride as NonNullable<typeof nextAlertOverride>).mode
+      : standingModeOf(name);
 
   const salahEvents = buildUpcomingSalahEvents(
     params.today,
@@ -656,7 +671,9 @@ export async function syncPrayerNotifications(params: {
   // Silent means no alarm is registered, not a muted one. It is the only
   // version of "silent" that also keeps the prayer off the lock screen,
   // and it is what someone who silenced Fajr is asking for.
-  const audibleEvents = salahEvents.filter(e => modeOf(e.name) !== 'silent');
+  const audibleEvents = salahEvents.filter(
+    e => modeAt(e.name, e.at.getTime()) !== 'silent',
+  );
   const reminderEvents =
     reminderMinutes > 0
       ? buildPrePrayerReminderEvents(audibleEvents, reminderMinutes, now)
@@ -760,17 +777,17 @@ export async function syncPrayerNotifications(params: {
     // prayers. They fall back to the plain default notification sound; every
     // actual prayer uses the user's chosen adhan/sound.
     const isNonPrayer = isNonPrayerEvent(e.name);
-    const isMutedNext = mutedNextAdhan === `${e.at.getTime()}-${e.name}`;
-    // The row's own mode decides. `isNonPrayer` stays in the condition
-    // rather than being folded into the mode: Sunrise can never reach
-    // 'adhan' through the setting, and it must not reach it through a
-    // stored value either.
+    // The row's own mode decides, unless the card's button spoke for this
+    // one instant. `isNonPrayer` stays in the condition rather than being
+    // folded into the mode: Sunrise can never reach 'adhan' through the
+    // setting, and it must not reach it through a stored value either.
     const wantsAdhan =
-      !isNonPrayer && !isMutedNext && modeOf(e.name) === 'adhan';
+      !isNonPrayer && modeAt(e.name, e.at.getTime()) === 'adhan';
     const eventSound = wantsAdhan ? prayerTimeSound : reminderSound;
     // The alarm twin is for the CALL TO PRAYER only. Sunrise and the night
-    // times are not prayers, and a muted next adhan has just been silenced
-    // on purpose — neither should override a silenced phone.
+    // times are not prayers, and an occurrence the card's button has just
+    // moved off the adhan was moved off it on purpose — neither should
+    // override a silenced phone.
     const eventTargets = resolveSoundTargets(
       eventSound.id,
       useAlarmStream && wantsAdhan,

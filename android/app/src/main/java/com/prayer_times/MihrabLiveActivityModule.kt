@@ -573,8 +573,13 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
         val effectiveAccent = if (justArrived) Color.parseColor("#22C55E") else accentInt
 
         val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val muteEpoch = prefs.getLong(MihrabLiveActivityActionReceiver.KEY_MUTED_EPOCH, -1L)
-        val isMutedNext = muteEpoch == nextEpochMs
+        // What the upcoming event is set to, and whether that answer came
+        // from the standing per-prayer setting or from a tap on this card.
+        // The two look different on the button on purpose — see the label
+        // built with the action below.
+        val alertMode = LiveActivityAlertModes.effectiveMode(prefs, p, nextEpochMs, nextKey)
+        val alertOverridden =
+          LiveActivityAlertModes.overrideFor(prefs, nextEpochMs, nextKey) != null
         // User-toggled: when hidden, keep the card in the shade but drop it off
         // the lock screen / always-on display (VISIBILITY_SECRET) and skip the
         // status-bar chip promotion below. Independent of the master on/off.
@@ -683,27 +688,49 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
             .setShowWhen(true)
         }
 
-        // "Mute next adhan" toggle action — shown when an adhan is selected and
-        // the upcoming event is a real prayer. The label reflects the current
-        // mute state (stored natively); the broadcast routes to the headless
-        // reschedule. Independent of the rest so a failure can't break the card.
-        if (p.optBoolean("adhanActionEnabled", false) && nextKey.isNotEmpty()) {
+        // The alert-mode action — the same control as the home row, for one
+        // occurrence. One tap cycles the upcoming event through the modes
+        // its row allows: three for a prayer, two for Sunrise and the night
+        // marks, which have no adhan to offer.
+        //
+        // THE LABEL IS THE STATE, NOT THE VERB. It reads "Adhan", "Alert" or
+        // "Silent" — the three words printed under the glyph on the home row
+        // — because the first thing this button has to do is answer a
+        // question the reader already has: what is going to happen at Fajr?
+        // The button it replaced could not answer that. It said "Mute next
+        // adhan" over a prayer somebody had already set to the plain alert.
+        //
+        // The "· once" marker appears only while an override is actually
+        // live. With none, the button is reporting the standing setting and
+        // marking that temporary would be the same lie in reverse.
+        //
+        // Independent of the rest so a failure can't break the card.
+        if (p.optBoolean("alertActionEnabled", false) && nextKey.isNotEmpty()) {
           runCatching {
+            val stateWord = when (alertMode) {
+              LiveActivityAlertModes.ADHAN -> p.optString("alertLabelAdhan", "Adhan")
+              LiveActivityAlertModes.SILENT -> p.optString("alertLabelSilent", "Silent")
+              else -> p.optString("alertLabelNotification", "Alert")
+            }
             val actionLabel =
-              if (isMutedNext) p.optString("unmuteLabel", "Unmute next adhan")
-              else p.optString("muteLabel", "Mute next adhan")
-            val muteIntent = Intent(ctx, MihrabLiveActivityActionReceiver::class.java).apply {
+              if (alertOverridden) joinDot(stateWord, p.optString("alertOnceWord", "once"))
+              else stateWord
+            // Epoch and key only. The receiver reads the current mode back
+            // from the same two sources this builder did, so a PendingIntent
+            // the system kept from an earlier post cannot apply a mode that
+            // has since moved on.
+            val cycleIntent = Intent(ctx, MihrabLiveActivityActionReceiver::class.java).apply {
               action = MihrabLiveActivityActionReceiver.ACTION_TOGGLE_MUTE_NEXT
               putExtra(MihrabLiveActivityActionReceiver.EXTRA_EPOCH, nextEpochMs)
               putExtra(MihrabLiveActivityActionReceiver.EXTRA_NAME, nextKey)
             }
-            val mutePi = PendingIntent.getBroadcast(
-              ctx, 0x4D55, muteIntent,
+            val cyclePi = PendingIntent.getBroadcast(
+              ctx, 0x4D55, cycleIntent,
               PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
             val actIcon = Icon.createWithResource(ctx, R.drawable.ic_stat_prayer)
             builder.addAction(
-              Notification.Action.Builder(actIcon, actionLabel, mutePi).build(),
+              Notification.Action.Builder(actIcon, actionLabel, cyclePi).build(),
             )
           }
         }

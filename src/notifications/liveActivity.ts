@@ -51,7 +51,7 @@ import {
   getNotificationSoundOption,
   resolveSoundTargets,
 } from './notificationSounds';
-import { OPTIONAL_TIME_KEYS } from '../types/prayer';
+import { shownAlertMode } from '../settings/alertModes';
 import { formatHijriLabel } from '../hijri/formatHijriLabel';
 
 /** Hijri label for a "yyyy-MM-dd" day key (parsed in local time). */
@@ -364,6 +364,41 @@ export async function startOrUpdateLiveActivity(
       nowMs,
       input.todayTimings,
     );
+    // ── What each event is set to ───────────────────────────────────
+    //
+    // Read once, here, and then stamped onto every row of every day. The
+    // card walks to the next event on its own — natively, with no JS
+    // running — so anything the action button needs to know has to be
+    // sitting on the row it walks to, not on a field describing whichever
+    // event happened to be next when this payload was written.
+    let lockButton = true;
+    let alertActionEnabled = false;
+    let adhanChannelId = 'prayer-times-default';
+    let adhanSoundId = 'default';
+    let modeOfKey = (_key: string): 'adhan' | 'notification' | 'silent' =>
+      'notification';
+    try {
+      const s = await loadSettings();
+      lockButton = s.liveActivityLockButton !== false;
+      const soundOpt = getNotificationSoundOption(s.notificationSound);
+      // Resolved rather than read off the table: the user's own recording has
+      // no fixed channel, and if its file has gone this lands on the default
+      // one instead of a channel that does not exist.
+      adhanChannelId = resolveSoundTargets(soundOpt.id).androidChannelId;
+      adhanSoundId = soundOpt.id;
+      const adhanChosen = soundOpt.id !== 'default';
+      const alertModes = s.prayerAlertModes ?? {};
+      modeOfKey = key =>
+        shownAlertMode(key, alertModes, adhanChosen, s.notificationsEnabled);
+      // With notifications off every row reads silent and the master switch
+      // has already answered the question the button asks. Cycling would
+      // either do nothing audible or quietly turn the master back on, and a
+      // control that is meant to last one prayer must not do the second.
+      alertActionEnabled = s.notificationsEnabled;
+    } catch {
+      // Non-fatal — the Live Activity still renders without the extras.
+    }
+
     // Project rows to the shape the native module expects (key/name/time).
     // We send the localised long names so the expanded list isn't reading
     // as widget abbrevs ("Magh") — the widget payload uses short forms,
@@ -373,6 +408,7 @@ export async function startOrUpdateLiveActivity(
       name: localizedPrayerName(r.key, r.abbr),
       time: r.time,
       display: r.display,
+      mode: modeOfKey(r.key),
     }));
     const sunriseRow = input.payload.sunriseRow
       ? {
@@ -383,6 +419,7 @@ export async function startOrUpdateLiveActivity(
           ),
           time: input.payload.sunriseRow.time,
           display: input.payload.sunriseRow.display,
+          mode: modeOfKey(input.payload.sunriseRow.key),
         }
       : undefined;
     const extraRows = (input.payload.extraRows ?? []).map(r => ({
@@ -390,6 +427,7 @@ export async function startOrUpdateLiveActivity(
       name: localizedPrayerName(r.key, r.abbr),
       time: r.time,
       display: r.display,
+      mode: modeOfKey(r.key),
     }));
     // Project the multi-day schedule to the native shape with localised long
     // names. This is what lets the foreground-service ticker advance to the
@@ -404,6 +442,7 @@ export async function startOrUpdateLiveActivity(
         name: localizedPrayerName(r.key, r.abbr),
         time: r.time,
         display: r.display,
+        mode: modeOfKey(r.key),
       })),
       sunriseRow: d.sunriseRow
         ? {
@@ -411,6 +450,7 @@ export async function startOrUpdateLiveActivity(
             name: localizedPrayerName(d.sunriseRow.key, d.sunriseRow.abbr),
             time: d.sunriseRow.time,
             display: d.sunriseRow.display,
+            mode: modeOfKey(d.sunriseRow.key),
           }
         : undefined,
       extraRows: (d.extraRows ?? []).map(r => ({
@@ -418,34 +458,9 @@ export async function startOrUpdateLiveActivity(
         name: localizedPrayerName(r.key, r.abbr),
         time: r.time,
         display: r.display,
+        mode: modeOfKey(r.key),
       })),
     }));
-    // Android 17 extras: the lock-screen button and the "Mute next adhan"
-    // toggle. Read from settings here (once per JS sync — the per-second
-    // redraw is native) rather than threading through every layer.
-    let lockButton = true;
-    let adhanActionEnabled = false;
-    let adhanChannelId = 'prayer-times-default';
-    let adhanSoundId = 'default';
-    try {
-      const s = await loadSettings();
-      lockButton = s.liveActivityLockButton !== false;
-      const soundOpt = getNotificationSoundOption(s.notificationSound);
-      // Resolved rather than read off the table: the user's own recording has
-      // no fixed channel, and if its file has gone this lands on the default
-      // one instead of a channel that does not exist.
-      adhanChannelId = resolveSoundTargets(soundOpt.id).androidChannelId;
-      adhanSoundId = soundOpt.id;
-      const nextKey = input.payload.nextKey ?? '';
-      const nextIsRealPrayer = !(
-        OPTIONAL_TIME_KEYS as readonly string[]
-      ).includes(nextKey);
-      adhanActionEnabled =
-        s.notificationsEnabled && soundOpt.id !== 'default' && nextIsRealPrayer;
-    } catch {
-      // Non-fatal — the Live Activity still renders without the extras.
-    }
-
     const nativePayload: MihrabLiveActivityPayload = {
       nextLabel: input.nextPrayerLabel,
       nextTime,
@@ -473,9 +488,15 @@ export async function startOrUpdateLiveActivity(
       // Always. It was a setting once — see settings/types.ts on why the
       // clock time beside the countdown stopped being a question.
       secondMetric: 'time',
-      adhanActionEnabled,
-      muteLabel: i18n.t('liveActivity.muteNext', 'Mute next adhan'),
-      unmuteLabel: i18n.t('liveActivity.unmuteNext', 'Unmute next adhan'),
+      alertActionEnabled,
+      // The home row's own three words. Sharing them is the point: the
+      // card and the row are now the same control, and a control that
+      // calls itself "Alert" in one place and "Mute" in the other is two
+      // controls as far as the reader is concerned.
+      alertLabelAdhan: i18n.t('settings.alertModeAdhan', 'Adhan'),
+      alertLabelNotification: i18n.t('settings.alertModeNotification', 'Alert'),
+      alertLabelSilent: i18n.t('settings.alertModeSilent', 'Silent'),
+      alertOnceWord: i18n.t('liveActivity.justThisOne', 'once'),
       // Second action: toggle the card's lock-screen / always-on-display
       // visibility (native-only state; independent of the master on/off setting).
       // The lock-screen toggle is one of two actions the card has room

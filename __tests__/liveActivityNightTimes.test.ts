@@ -92,9 +92,23 @@ describe('the Live Activity payload carries the enabled night marks', () => {
     }
   });
 
-  it('never hands a night mark the adhan button', async () => {
+  it('never offers a night mark the adhan', async () => {
     await run(new Date(2026, 5, 14, 21, 0, 0, 0));
-    expect(sent().adhanActionEnabled).toBe(false);
+    const p = sent();
+    // The action itself is not withheld any more — a night mark can be
+    // set to the plain alert or to silence for one occurrence, same as a
+    // prayer. What it may never carry is the call to prayer, and the
+    // mode travelling on its row is where that is decided: the native
+    // cycle is built from it, so a night mark that arrived marked
+    // 'adhan' would be offered the adhan.
+    expect(p.alertActionEnabled).toBe(true);
+    const marks = [
+      ...p.extraRows,
+      ...p.days.flatMap((d: { extraRows: unknown[] }) => d.extraRows),
+      ...(p.sunriseRow ? [p.sunriseRow] : []),
+    ] as { key: string; mode: string }[];
+    expect(marks.length).toBeGreaterThan(0);
+    for (const r of marks) expect(r.mode).not.toBe('adhan');
   });
 
   it('leaves them out when the toggle is off', async () => {

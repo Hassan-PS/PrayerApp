@@ -8,25 +8,36 @@ import androidx.core.app.NotificationManagerCompat
 import org.json.JSONObject
 
 /**
- * Handles the "Mute next adhan" toggle action on the Live Activity (Android 17+).
+ * Handles the Live Activity's action buttons (Android 17+).
+ *
+ * The alert-mode button was a two-state "Mute next adhan" toggle. It is now
+ * the same three-way control as the home row — adhan / alert / silent, one
+ * tap per step, for the upcoming occurrence only. See
+ * [LiveActivityAlertModes] for why the mode travels on every row and why the
+ * override is stored against an instant.
  *
  * The Live Activity is a native Notification.Builder (not notifee), so its
  * action button fires a broadcast here. We split responsibility:
  *
- *   • Native owns the BUTTON STATE — the muted-prayer epoch is stored in the
- *     Live Activity SharedPreferences and read back by the notification builder
- *     to choose the "Mute" vs "Unmute" label. This makes the label flip
+ *   • Native owns the BUTTON STATE — the override (an instant and a mode) is
+ *     stored in the Live Activity SharedPreferences and read back by the
+ *     notification builder to choose the label. This makes the label advance
  *     instantly and reliably, even with no JS runtime alive.
  *
- *   • JS owns the ACTUAL MUTE — the adhan is an OS-played notification-channel
- *     sound baked into a pre-scheduled notifee trigger, so silencing it means
- *     re-creating that trigger on a silent channel. That's JS work, dispatched
- *     to [AdhanMuteHeadlessService] (a HeadlessJS task) which runs even when the
- *     app is closed. The task also persists the mute so a later full resync
- *     keeps the prayer silent.
+ *   • JS owns the ACTUAL ALERT — the adhan is an OS-played
+ *     notification-channel sound baked into a pre-scheduled notifee trigger,
+ *     so changing the mode means re-creating that trigger on another channel,
+ *     or cancelling it outright for silent. That's JS work, dispatched to
+ *     [AdhanMuteHeadlessService] (a HeadlessJS task) which runs even when the
+ *     app is closed. The task also persists the override so a later full
+ *     resync rebuilds the alert the way the button left it.
  *
- * The two are independent: if the JS side fails, the button still toggles and
+ * The two are independent: if the JS side fails, the button still advances and
  * the Live Activity itself is never affected.
+ *
+ * NOTHING HERE WRITES THE STANDING SETTING. The home row is the answer for
+ * every Fajr; this is the answer for one of them, and a temporary control
+ * that quietly turns permanent is the worst of both.
  */
 class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
   override fun onReceive(ctx: Context, intent: Intent) {
@@ -60,6 +71,15 @@ class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
     }.onFailure { Log.w(TAG, "re-post after AOD toggle failed", it) }
   }
 
+  /**
+   * One step round the cycle for the upcoming occurrence.
+   *
+   * The intent carries only the instant and the key. The mode it is moving
+   * FROM is read back here from the same two places the builder read it —
+   * the stored override and the payload's own rows — so a PendingIntent the
+   * system kept from an earlier post can never apply a mode the card has
+   * since moved past.
+   */
   private fun handleMuteToggle(ctx: Context, intent: Intent) {
     val epoch = intent.getLongExtra(EXTRA_EPOCH, 0L)
     val name = intent.getStringExtra(EXTRA_NAME) ?: ""
@@ -68,30 +88,43 @@ class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
     val prefs = ctx.getSharedPreferences(
       MihrabLiveActivityModule.PREFS_NAME, Context.MODE_PRIVATE,
     )
-    val currentlyMuted = prefs.getLong(KEY_MUTED_EPOCH, -1L) == epoch
-    val nowMuted = !currentlyMuted
-    prefs.edit().putLong(KEY_MUTED_EPOCH, if (nowMuted) epoch else -1L).apply()
-    Log.i(TAG, "toggle mute next adhan: epoch=$epoch name=$name -> muted=$nowMuted")
-
     val payloadJson = MihrabLiveActivityModule.loadPayload(ctx)
     val payload = runCatching { payloadJson?.let { JSONObject(it) } }.getOrNull()
 
-    // 1) Re-post the Live Activity immediately so the button label flips now.
+    val current =
+      if (payload != null) {
+        LiveActivityAlertModes.effectiveMode(prefs, payload, epoch, name)
+      } else {
+        LiveActivityAlertModes.overrideFor(prefs, epoch, name)
+          ?: LiveActivityAlertModes.modesFor(name)[0]
+      }
+    val next = LiveActivityAlertModes.nextMode(name, current)
+    // The standing setting, so a cycle that lands back on it clears the
+    // override instead of pinning the row to a value it already held.
+    val base =
+      payload?.let { LiveActivityAlertModes.baseModeFor(it, name) }.orEmpty()
+    LiveActivityAlertModes.store(prefs, epoch, name, next, base)
+    Log.i(TAG, "cycle alert mode: epoch=$epoch name=$name $current -> $next (base=$base)")
+
+    // 1) Re-post the Live Activity immediately so the label advances now.
     runCatching {
       if (payload != null) {
         val notif = MihrabLiveActivityModule.buildNotificationFromPayload(ctx, payload)
         NotificationManagerCompat.from(ctx).notify(MihrabLiveActivityModule.NOTIF_ID, notif)
       }
-    }.onFailure { Log.w(TAG, "re-post after toggle failed", it) }
+    }.onFailure { Log.w(TAG, "re-post after cycle failed", it) }
 
-    // 2) Apply the real (un)mute in JS via a HeadlessJS task. The button tap is
+    // 2) Apply the real change in JS via a HeadlessJS task. The button tap is
     //    a user interaction, which grants the brief background start allowance
     //    the service needs. Reschedule data comes from the persisted payload.
+    //    Dispatched even when the cycle returned to the standing mode: an
+    //    earlier step may have cancelled or re-channelled that alert, and
+    //    clearing the override alone would not put it back.
     runCatching {
       val svc = Intent(ctx, AdhanMuteHeadlessService::class.java).apply {
         putExtra(EXTRA_EPOCH, epoch)
         putExtra(EXTRA_NAME, name)
-        putExtra(EXTRA_MUTED, nowMuted)
+        putExtra(EXTRA_MODE, next)
         putExtra("title", payload?.optString("nextLabel", name) ?: name)
         putExtra("body", payload?.optString("atPrayerBody", "") ?: "")
         putExtra("adhanChannelId", payload?.optString("adhanChannelId", "") ?: "")
@@ -104,7 +137,7 @@ class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
       }
       ctx.startService(svc)
       HeadlessReschedule.acquire(ctx)
-    }.onFailure { Log.w(TAG, "headless mute dispatch failed", it) }
+    }.onFailure { Log.w(TAG, "headless alert-mode dispatch failed", it) }
   }
 
   companion object {
@@ -113,9 +146,13 @@ class MihrabLiveActivityActionReceiver : BroadcastReceiver() {
     const val ACTION_TOGGLE_AOD = "com.prayer_times.ACTION_TOGGLE_AOD"
     const val EXTRA_EPOCH = "epoch"
     const val EXTRA_NAME = "name"
-    const val EXTRA_MUTED = "muted"
-    /** SharedPreferences key (in MihrabLiveActivityModule.PREFS_NAME) holding the
-     *  epoch of the prayer whose next adhan is muted, or -1 when none. */
+    /** The mode the tap is moving TO: adhan / notification / silent. */
+    const val EXTRA_MODE = "mode"
+    /** SharedPreferences key written by the two-state "Mute next adhan"
+     *  button this action replaced: the epoch of the prayer whose adhan was
+     *  muted, or -1. Still READ (see LiveActivityAlertModes.overrideFor) so
+     *  an install that updated between a mute and the prayer it muted does
+     *  not hear the adhan anyway; never written again. */
     const val KEY_MUTED_EPOCH = "muted_next_epoch"
     /** SharedPreferences key: true when the user hid the Live Activity from the
      *  lock screen / always-on display (it stays visible in the shade). */

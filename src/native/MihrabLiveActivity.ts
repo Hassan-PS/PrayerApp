@@ -21,6 +21,26 @@
  */
 import { NativeModules } from 'react-native';
 
+/**
+ * One event on the card.
+ *
+ * `mode` is how this event announces itself — the same three the home
+ * rows cycle through (`settings/alertModes.ts`), already resolved
+ * against the master notifications switch and the chosen sound. It
+ * rides on every row of every day rather than on the payload's head
+ * because the card advances to the next event BY ITSELF, natively, when
+ * a time passes: a single "the next one is set to X" field would be
+ * describing the previous prayer within minutes, which is how the
+ * button it replaced ended up offering to unmute Sunrise.
+ */
+export type LiveActivityRow = {
+  key: string;
+  name: string;
+  time: string;
+  display?: string;
+  mode?: 'adhan' | 'notification' | 'silent';
+};
+
 export type MihrabLiveActivityPayload = {
   /** Localised prayer name for the upcoming prayer. */
   nextLabel: string;
@@ -58,13 +78,13 @@ export type MihrabLiveActivityPayload = {
   progressFraction: number;
   /** Chronological prayer list. Each row carries the stable `key`, the
    *  localised long `name`, and the HH:MM `time`. */
-  rows: { key: string; name: string; time: string; display?: string }[];
+  rows: LiveActivityRow[];
   /** Sunrise row sent separately so the native module can splice it
    *  into slot 1 only when the user has the toggle on. */
-  sunriseRow?: { key: string; name: string; time: string; display?: string };
+  sunriseRow?: LiveActivityRow;
   /** Enabled pre-dawn night rows (Islamic Midnight / Last Third) for the
    *  currently-shown day. Added as timeline markers + countdown candidates. */
-  extraRows?: { key: string; name: string; time: string; display?: string }[];
+  extraRows?: LiveActivityRow[];
   /** Multi-day schedule (index 0 = today). The foreground-service ticker
    *  uses this to recompute the next/previous prayer against the absolute
    *  dated schedule, so the countdown rolls onto the correct day's times
@@ -76,9 +96,9 @@ export type MihrabLiveActivityPayload = {
     /** Hijri label for this day; the native ticker promotes it to the
      *  top-level hijriLabel as the day rolls over. */
     hijriLabel?: string;
-    rows: { key: string; name: string; time: string; display?: string }[];
-    sunriseRow?: { key: string; name: string; time: string; display?: string };
-    extraRows?: { key: string; name: string; time: string; display?: string }[];
+    rows: LiveActivityRow[];
+    sunriseRow?: LiveActivityRow;
+    extraRows?: LiveActivityRow[];
   }[];
   /** Hijri caption, empty string → omit. */
   hijriLabel: string;
@@ -115,12 +135,21 @@ export type MihrabLiveActivityPayload = {
    * picker with one sensible answer stopped being a picker.
    */
   secondMetric?: 'time';
-  /** When true, show the "Mute next adhan" toggle action (an adhan is
-   *  selected and prayer notifications are enabled). */
-  adhanActionEnabled?: boolean;
-  /** Localised action labels for the mute toggle. */
-  muteLabel?: string;
-  unmuteLabel?: string;
+  /** When true, show the alert-mode action — one tap cycles the upcoming
+   *  event through the modes its row allows, for that occurrence only.
+   *  False when notifications are off altogether, where a cycle would be
+   *  offering to change something the master switch has already decided. */
+  alertActionEnabled?: boolean;
+  /** The three state words, already localised — the same ones the home
+   *  rows print under their glyph, so the card and the row never call the
+   *  same mode two different things. */
+  alertLabelAdhan?: string;
+  alertLabelNotification?: string;
+  alertLabelSilent?: string;
+  /** Appended to the state word while an override is live ("Alert · once"),
+   *  and only then: with no override the button is showing the standing
+   *  setting, and marking that as temporary would be a lie. */
+  alertOnceWord?: string;
   /** When true, show the second "hide/show on lock screen" toggle action that
    *  controls whether the ongoing Live Activity appears on the lock screen /
    *  always-on display (independent of the master on/off setting). */
@@ -137,9 +166,9 @@ export type MihrabLiveActivityPayload = {
   inWord?: string;
   atWord?: string;
   sinceWord?: string;
-  /** Data the native mute action forwards to the HeadlessJS reschedule
-   *  task so it can re-create the next prayer's trigger silently / with
-   *  the adhan. */
+  /** Data the native alert-mode action forwards to the HeadlessJS task so
+   *  it can re-create the upcoming event's trigger on the channel its new
+   *  mode asks for — or cancel it, for silent. */
   atPrayerBody?: string;
   adhanChannelId?: string;
   adhanSoundId?: string;
