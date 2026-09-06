@@ -290,6 +290,11 @@ jest.mock('@notifee/react-native', () => ({
     cancelNotification: jest.fn(() => Promise.resolve()),
     createChannel: jest.fn(() => Promise.resolve()),
     deleteChannel: jest.fn(() => Promise.resolve()),
+    // Resolves to a channel, because that is what the real one does for a
+    // channel this app created — and code that asks "is this channel there?"
+    // before posting to it must not be told "no" by the harness. A suite that
+    // wants the absent case overrides this locally.
+    getChannel: jest.fn(id => Promise.resolve({ id })),
     createTriggerNotification: jest.fn(() => Promise.resolve()),
     displayNotification: jest.fn(() => Promise.resolve()),
     getNotificationSettings: jest.fn(() =>

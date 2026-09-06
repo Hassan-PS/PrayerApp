@@ -288,6 +288,28 @@ describe('an override speaks for one occurrence', () => {
     ).toEqual({ epoch: 1, name: 'Sunrise', mode: 'notification' });
   });
 
+  it('does not carry to the same prayer on another day', () => {
+    // The one that has to hold for weeks. An override is written against
+    // an instant precisely so that silencing tonight's Isha says nothing
+    // about tomorrow's — and the key alone would have made it permanent,
+    // which is the difference between this control and the home row.
+    const DAY = 86_400_000;
+    expect(overrideAppliesTo(o, o.epoch + DAY, 'Fajr')).toBe(false);
+    expect(overrideAppliesTo(o, o.epoch + 7 * DAY, 'Fajr')).toBe(false);
+    expect(overrideAppliesTo(o, o.epoch - DAY, 'Fajr')).toBe(false);
+  });
+
+  it('is one row of storage, however many times it is used', () => {
+    // Nothing here accumulates: one key, overwritten. A stale one for a
+    // past instant simply stops matching, so there is nothing to expire
+    // and nothing that grows over weeks of pressing the button.
+    const ts = read('src/notifications/adhanMute.ts');
+    expect(ts).toMatch(/AsyncStorage\.setItem\(\s*\n?\s*MUTED_NEXT_ADHAN_KEY,/);
+    expect(ts).not.toMatch(/getAllKeys|multiSet|push\(/);
+    const kt = code(KOTLIN);
+    expect(kt).toMatch(/putLong\(KEY_OVERRIDE_EPOCH, epochMs\)\.putString\(KEY_OVERRIDE_MODE, mode\)/);
+  });
+
   it('refuses nonsense rather than guessing', () => {
     for (const raw of ['', null, undefined, 'nope', '{', '{"epoch":0}']) {
       expect(parseNextAlertOverride(raw)).toBeNull();
@@ -436,5 +458,30 @@ describe('there is one list of what is not a prayer, on each side', () => {
     // decided from its own key, on every build. A hop cannot outrun that.
     expect(code(SERVICE)).not.toMatch(/put\("adhanActionEnabled"/);
     expect(code(SERVICE)).not.toMatch(/put\("alertActionEnabled"/);
+  });
+});
+
+
+describe('the channel it posts to has to be there', () => {
+  const ts = read('src/notifications/adhanMute.ts');
+
+  it('falls back to a channel that exists rather than posting into nothing', () => {
+    // This task runs from a broadcast with the app closed, against an id
+    // resolved when the card was last built. The alarm twin is created
+    // only on the sync after the setting is turned on — and posting to a
+    // channel that is not there is dropped by Android with no error and
+    // no sound, so the prayer the user just asked to hear would simply
+    // not arrive. A plain alert is the better failure, and the next full
+    // resync puts the right channel back.
+    expect(ts).toMatch(/await notifee\.getChannel\(id\)\) \? id : fallback/);
+    expect(ts).toMatch(/wantsAdhan\s*\n?\s*\? await usable\(data\.adhanChannelId \|\| plain, plain\)/);
+  });
+
+  it('falls back for the plain channel too', () => {
+    expect(ts).toMatch(/: await usable\(plain, DEFAULT_CHANNEL\)/);
+  });
+
+  it('treats a throw from the lookup as absent', () => {
+    expect(ts).toMatch(/\} catch \{\s*\n\s*return fallback;/);
   });
 });

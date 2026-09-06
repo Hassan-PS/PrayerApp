@@ -374,6 +374,7 @@ export async function startOrUpdateLiveActivity(
     let lockButton = true;
     let alertActionEnabled = false;
     let adhanChannelId = 'prayer-times-default';
+    let defaultChannelId = 'prayer-times-default';
     let adhanSoundId = 'default';
     let modeOfKey = (_key: string): 'adhan' | 'notification' | 'silent' =>
       'notification';
@@ -384,7 +385,31 @@ export async function startOrUpdateLiveActivity(
       // Resolved rather than read off the table: the user's own recording has
       // no fixed channel, and if its file has gone this lands on the default
       // one instead of a channel that does not exist.
-      adhanChannelId = resolveSoundTargets(soundOpt.id).androidChannelId;
+      //
+      // AND RESOLVED WITH THE ALARM STREAM, which it was not.
+      //
+      // "Play adhan as an alarm" is not a flag on a channel — a channel's
+      // sound and audio attributes are frozen when it is created, so the
+      // ringer-proof version is a SEPARATE channel with an `-alarm` suffix.
+      // The scheduler has always known that; this payload did not, so the id
+      // it handed the card's button was the ordinary one. Cycle a prayer back
+      // to Adhan from the lock screen with that setting on and its adhan was
+      // quietly re-created on the stream that a silenced phone silences —
+      // which is the exact thing the setting exists to prevent, undone by the
+      // control that was supposed to be putting it back.
+      //
+      // Safe to resolve the alarm twin unconditionally here because the only
+      // consumer is the `wantsAdhan` branch of the headless task: the call to
+      // prayer, on a real prayer. A reminder or a night mark never reads it.
+      adhanChannelId = resolveSoundTargets(
+        soundOpt.id,
+        s.adhanUsesAlarmStream === true,
+      ).androidChannelId;
+      // The plain-alert channel, asked for rather than spelled out. It was
+      // the literal 'prayer-times-default' in two places, which is true until
+      // the day the default option's channel is renamed and the button starts
+      // posting to a channel that does not exist.
+      defaultChannelId = resolveSoundTargets('default').androidChannelId;
       adhanSoundId = soundOpt.id;
       const adhanChosen = soundOpt.id !== 'default';
       const alertModes = s.prayerAlertModes ?? {};
@@ -511,7 +536,7 @@ export async function startOrUpdateLiveActivity(
       atPrayerBody: i18n.t('alertCopy.atPrayer', 'Prayer time'),
       adhanChannelId,
       adhanSoundId,
-      defaultChannelId: 'prayer-times-default',
+      defaultChannelId,
     };
     try {
       await native.display(JSON.stringify(nativePayload));

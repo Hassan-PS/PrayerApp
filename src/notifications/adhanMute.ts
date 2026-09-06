@@ -203,6 +203,27 @@ export async function adhanMuteToggleTask(
       return;
     }
 
+    // THE CHANNEL HAS TO EXIST, and this task is the one place that cannot
+    // assume it does.
+    //
+    // Everywhere else that schedules a prayer has just run `ensureChannel`
+    // in the same pass. This runs from a broadcast, with the app closed,
+    // against an id that was resolved when the card was last built — and
+    // "Play adhan as an alarm" is a SEPARATE channel (`-alarm`), created
+    // only on the sync that follows turning the setting on. Post to a
+    // channel that is not there and Android drops the notification with no
+    // error and no sound: the prayer the user just asked to hear the adhan
+    // for would simply not arrive. A plain alert on a channel that exists is
+    // the better failure, and it is recoverable — the next full resync puts
+    // the right channel back.
+    const usable = async (id: string, fallback: string) => {
+      try {
+        return (await notifee.getChannel(id)) ? id : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
     // WHAT THIS TASK IS HANDED IS NOT NECESSARILY A PRAYER.
     //
     // The card advances itself natively when a time passes, and it walks
@@ -212,9 +233,10 @@ export async function adhanMuteToggleTask(
     // is the second half of the same guard, on the channel itself.
     const isPrayer = !isNonPrayerEvent(name);
     const wantsAdhan = mode === 'adhan' && isPrayer;
+    const plain = data.defaultChannelId || DEFAULT_CHANNEL;
     const channelId = wantsAdhan
-      ? data.adhanChannelId || DEFAULT_CHANNEL
-      : data.defaultChannelId || DEFAULT_CHANNEL;
+      ? await usable(data.adhanChannelId || plain, plain)
+      : await usable(plain, DEFAULT_CHANNEL);
 
     await notifee.createTriggerNotification(
       {
