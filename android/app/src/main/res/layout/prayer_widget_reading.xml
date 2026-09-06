@@ -104,51 +104,16 @@
 
 
 
-                <!--
-                    The surah, and the one control on this card.
-
-                    Issue #25: resuming meant opening the bookmark, finding
-                    the reciter and pressing play. A tap on the card still
-                    opens the page silently, because that is what most
-                    people want most of the time and hijacking it would
-                    surprise every one of them. The button beside it is the
-                    other intent, said plainly.
-
-                    On the title line rather than in a corner: it belongs to
-                    the surah named next to it, it survives at 2x2 where the
-                    side column does not, and a 40dp disc is a real target
-                    for a thumb on a home screen.
-                -->
-                <LinearLayout
+                <TextView
+                    android:id="@+id/reading_surah"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:orientation="horizontal"
-                    android:baselineAligned="false"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:id="@+id/reading_surah"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:textColor="#E8EAED"
-                        android:textSize="23sp"
-                        android:fontFamily="sans-serif-medium"
-                        android:maxLines="1"
-                        android:ellipsize="end" />
-
-                    <ImageView
-                        android:id="@+id/reading_play"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginStart="8dp"
-                        android:padding="9dp"
-                        android:scaleType="fitCenter"
-                        android:background="@drawable/widget_play_button"
-                        android:src="@drawable/ic_widget_play"
-                        android:visibility="gone" />
-                </LinearLayout>
+                    android:textColor="#E8EAED"
+                    android:textSize="23sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
                 <TextView
                     android:id="@+id/reading_position"
@@ -191,6 +156,34 @@
                     android:ellipsize="end"
                     android:visibility="gone" />
             </LinearLayout>
+
+            <!--
+                The one control on this card (issue #25).
+
+                BETWEEN the columns, not inside one of them. It began inside
+                the text column on the surah's line, where it read well and
+                cost more than it looked: a 40dp control makes the line it
+                sits on 40dp tall, and at one cell the card has 69dp for the
+                whole stack — so the header, the surah and the page no
+                longer fitted and the last of them was cut off. A control
+                should not decide how tall a paragraph is.
+
+                Out here it is a sibling of both columns and centred against
+                them, so its size bounds the CARD (which is at least 89dp at
+                the smallest size it offers) instead of the text. 36dp is
+                still a comfortable target for a thumb.
+            -->
+            <ImageView
+                android:id="@+id/reading_play"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginStart="8dp"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                android:background="@drawable/widget_play_button"
+                android:src="@drawable/ic_widget_play"
+                android:visibility="gone" />
 
             <!-- Centred like the column opposite. Two full-height columns with
                  different gravities read as two widgets pushed together. -->

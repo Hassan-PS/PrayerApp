@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.TypedValue
 import android.view.View
 import android.widget.RemoteViews
 import org.json.JSONObject
@@ -104,10 +105,82 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
       return root.optJSONObject("reading")
     }
 
-    /** Two launcher rows: room for the bar and the lines under it. */
-    // 150dp, not 100 — the same landscape-vs-portrait correction as the
-    // prayer widget's thresholds. See PrayerWidgetProvider.sizeDp.
-    private const val PROGRESS_MIN_HEIGHT_DP = 150
+    /**
+     * Room for the bar and the two lines under it.
+     *
+     * 170dp, and the number is arithmetic rather than taste. The full stack
+     * — header, surah, page, bar, its label, the tail, with the margins
+     * between them — measures about 133dp, and a card is given 32dp less
+     * than the launcher hands it (6dp of inset a side, 10dp of padding).
+     * So the bar cannot be drawn below 165dp without cutting the lines it
+     * sits above.
+     *
+     * It was 150, which is under that: between 150 and 165 the card drew a
+     * stack it had no room for. Two launcher rows is about 220dp so the
+     * common case was fine, which is why it went unnoticed — the same way
+     * the one-row case fitted by a rounding error until it didn't.
+     * `__tests__/readingWidgetSizes.test.ts` computes this rather than
+     * trusting it.
+     */
+    private const val PROGRESS_MIN_HEIGHT_DP = 170
+
+    /**
+     * ── HOW MUCH ROOM THERE ACTUALLY IS ──────────────────────────────
+     *
+     * The default size is 4x1, and one launcher row is not much. Measured
+     * on a 420dpi phone: the launcher hands this widget about 101dp, the
+     * card insets 6dp on each side and pads 10dp inside that, so the
+     * content has **69dp**. At the sizes the type was set to — an 11sp
+     * header, a 23sp surah name and a 13sp position line, with their
+     * margins — the left column wanted 65dp of it and the side column 70dp.
+     * Both were inside a rounding error of the edge, and the side column
+     * was already over it: "3 pages left" was cut in half on the default
+     * size, which is what a reader sees first.
+     *
+     * Then the play control landed on the surah's line and made that line
+     * 40dp, which took the left column to 77dp and cut the position too.
+     * A card that fits by luck will stop fitting.
+     *
+     * So height picks a tier, and each tier is sized to fit with room over.
+     * COMPACT drops the least load-bearing line and scales the type down;
+     * GENEROUS scales it up, because three and four rows of a card that
+     * keeps 4x1's type is mostly air with a border round it.
+     */
+    private const val COMPACT_MAX_HEIGHT_DP = 130
+    private const val GENEROUS_MIN_HEIGHT_DP = 240
+
+    private enum class Tier { COMPACT, NORMAL, GENEROUS }
+
+    /** An unmeasured height is NORMAL: the same fallback the bar has. */
+    private fun tierFor(heightDp: Int): Tier = when {
+      heightDp <= 0 -> Tier.NORMAL
+      heightDp < COMPACT_MAX_HEIGHT_DP -> Tier.COMPACT
+      heightDp >= GENEROUS_MIN_HEIGHT_DP -> Tier.GENEROUS
+      else -> Tier.NORMAL
+    }
+
+    /**
+     * Type scale per tier, in sp.
+     *
+     * `setTextViewTextSize` rather than three layouts: the difference
+     * between the sizes is what the type measures, and three copies of the
+     * same card would be three places to fix the next thing.
+     */
+    private fun applyTypeScale(views: RemoteViews, tier: Tier) {
+      val sp = TypedValue.COMPLEX_UNIT_SP
+      views.setTextViewTextSize(
+        R.id.reading_surah, sp,
+        when (tier) { Tier.COMPACT -> 20f; Tier.NORMAL -> 23f; Tier.GENEROUS -> 28f },
+      )
+      views.setTextViewTextSize(
+        R.id.reading_position, sp,
+        when (tier) { Tier.COMPACT -> 12f; else -> 13f },
+      )
+      views.setTextViewTextSize(
+        R.id.reading_side_value, sp,
+        when (tier) { Tier.COMPACT -> 22f; Tier.NORMAL -> 27f; Tier.GENEROUS -> 32f },
+      )
+    }
 
     fun buildViews(base: Context, widthDp: Int = 0, heightDp: Int = 0): RemoteViews {
       // Every label below comes out of the string table, so the context has to
@@ -117,6 +190,9 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
       val views = RemoteViews(context.packageName, R.layout.prayer_widget_reading)
       val (background, accent) = PrayerWidgetProvider.resolvedColors(context)
       WidgetCard.paint(views, background)
+
+      val tier = tierFor(heightDp)
+      applyTypeScale(views, tier)
 
       val r = reading(context)
       if (r == null) {
@@ -164,8 +240,12 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
         )
         // The invitation is three short lines in a card built for six, so
         // the tail carries the one fact that makes it concrete rather than
-        // leaving the bottom half of the widget empty.
-        views.setViewVisibility(R.id.reading_tail, View.VISIBLE)
+        // leaving the bottom half of the widget empty — at the sizes that
+        // have a bottom half. At one row it is the line to lose.
+        views.setViewVisibility(
+          R.id.reading_tail,
+          if (tier == Tier.COMPACT) View.GONE else View.VISIBLE,
+        )
         views.setTextViewText(
           R.id.reading_tail,
           context.getString(R.string.widget_reading_start_tail),
@@ -182,6 +262,10 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
           R.id.reading_side_note,
           context.getString(R.string.widget_reading_start_side_note),
         )
+        views.setViewVisibility(
+          R.id.reading_side_note,
+          if (tier == Tier.COMPACT) View.GONE else View.VISIBLE,
+        )
         // "Continue from where you left off" is not on offer to someone
         // who has not left off anywhere. A play button here would recite
         // Al-Fatiha at a reader who asked for nothing.
@@ -194,10 +278,17 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
       // the progress bar belongs to the taller sizes. Hiding it is not a
       // loss: the page number above says the same thing, and a 4dp bar
       // squeezed against a card edge says it worse.
-      val tall = heightDp <= 0 || heightDp >= PROGRESS_MIN_HEIGHT_DP
+      val tall = tier != Tier.COMPACT && (heightDp <= 0 || heightDp >= PROGRESS_MIN_HEIGHT_DP)
       views.setViewVisibility(R.id.reading_progress, if (tall) View.VISIBLE else View.GONE)
       views.setViewVisibility(R.id.reading_progress_label, if (tall) View.VISIBLE else View.GONE)
       views.setViewVisibility(R.id.reading_tail, if (tall) View.VISIBLE else View.GONE)
+      // The side column's third line is the first thing to go: "3 pages
+      // left" repeats what the counter above it already showed, and it was
+      // the line being cut off at the default size.
+      views.setViewVisibility(
+        R.id.reading_side_note,
+        if (tier == Tier.COMPACT) View.GONE else View.VISIBLE,
+      )
 
       val khatmah = r.optJSONObject("khatmah")
       views.setTextViewText(
@@ -268,14 +359,26 @@ class PrayerWidgetReadingProvider : AppWidgetProvider() {
         // line has nowhere else to be — and the column is taller than its
         // content without it.
         val tail = lastReadTail(context, r)
-        if (tail != null) {
+        // `tall` still decides. This branch used to set the tail visible on
+        // its own, which put a line back onto a card that had just decided
+        // it had no room for one.
+        if (tail != null && tall) {
           views.setViewVisibility(R.id.reading_tail, View.VISIBLE)
           views.setTextViewText(R.id.reading_tail, tail)
         } else {
           views.setViewVisibility(R.id.reading_tail, View.GONE)
         }
       } else {
-        views.setViewVisibility(R.id.reading_tail, View.GONE)
+        // Without a plan the tail is the one line left to fill a tall card,
+        // and at three rows and up there is a lot of card to fill: the left
+        // column is a header, a name and a page, and the rest was air.
+        val tail = if (tier == Tier.GENEROUS) lastReadTail(context, r) else null
+        if (tail != null) {
+          views.setViewVisibility(R.id.reading_tail, View.VISIBLE)
+          views.setTextViewText(R.id.reading_tail, tail)
+        } else {
+          views.setViewVisibility(R.id.reading_tail, View.GONE)
+        }
         views.setTextViewText(
           R.id.reading_side_title,
           context.getString(R.string.widget_reading_last_read),

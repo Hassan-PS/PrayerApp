@@ -16,6 +16,12 @@
   where was I. Both sizes are in the plan; that is what makes the small one
   honest rather than cramped.
 
+  maxResizeHeight is 400dp, not 200. At 200 the card could not be dragged
+  past about two rows, so "make it taller" was not an option a user had —
+  and the sizes above two are the ones with room for the progress bar, the
+  tail and type that is actually large. The provider sizes its content to
+  what it is given (see Tier there), so the ceiling is only a ceiling.
+
   updatePeriodMillis is 0. A reading position moves when a page is turned
   and the app pushes then; what changes unattended is the day, which
   ACTION_PRAYER_TIME_ELAPSED already brings round.
@@ -53,4 +59,4 @@
     android:targetCellWidth="4"
     android:targetCellHeight="1"
     android:maxResizeWidth="500dp"
-    android:maxResizeHeight="200dp" />
+    android:maxResizeHeight="400dp" />
