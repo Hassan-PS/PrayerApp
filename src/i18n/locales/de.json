@@ -91,7 +91,10 @@
     "readingDone": "Heutige Lesung erledigt",
     "readOn": "Weiterlesen",
     "qiblaChipA11y": "Qibla {{degrees}} Grad",
-    "qiblaChipHint": "Öffnet den Qibla-Kompass"
+    "qiblaChipHint": "Öffnet den Qibla-Kompass",
+    "alertOverrideOnce": "{{mode}} nur dieses Mal · Zurücksetzen",
+    "alertOverrideA11y": "{{prayer}} ist nur dieses Mal auf {{mode}} gestellt",
+    "alertOverrideResetHint": "Stellt {{mode}} wieder her"
   },
   "errors": {
     "locationNeededTitle": "Standort erforderlich",

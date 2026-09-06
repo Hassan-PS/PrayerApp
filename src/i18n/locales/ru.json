@@ -91,7 +91,10 @@
     "readingDone": "Чтение на сегодня завершено",
     "readOn": "Читать дальше",
     "qiblaChipA11y": "Кибла {{degrees}} градусов",
-    "qiblaChipHint": "Открывает компас киблы"
+    "qiblaChipHint": "Открывает компас киблы",
+    "alertOverrideOnce": "{{mode}} только в этот раз · Сбросить",
+    "alertOverrideA11y": "{{prayer}} — {{mode}} только в этот раз",
+    "alertOverrideResetHint": "Возвращает {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Требуется местоположение",

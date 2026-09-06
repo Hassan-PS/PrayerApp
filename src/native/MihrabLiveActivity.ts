@@ -178,6 +178,9 @@ export type MihrabLiveActivityPayload = {
 export interface MihrabLiveActivityInterface {
   display(payloadJson: string): Promise<void>;
   cancel(): Promise<void>;
+  /** Forget the one-occurrence override and repaint the card without it.
+   *  Optional: a JS bundle can outlive the native module that has it. */
+  clearAlertOverride?(): Promise<void>;
 }
 
 export function getMihrabLiveActivityModule(): MihrabLiveActivityInterface | null {
@@ -186,4 +189,25 @@ export function getMihrabLiveActivityModule(): MihrabLiveActivityInterface | nul
     | undefined;
   if (mod?.display) return mod;
   return null;
+}
+
+/**
+ * Clear the native half of the one-occurrence override.
+ *
+ * The JS half lives in AsyncStorage and the native half in the Live
+ * Activity's own preferences, because the card's button has to be able to
+ * label itself with no JS runtime alive. A reset has to reach both, and
+ * this is the second one.
+ *
+ * Never throws: the row's reset has already done the part that decides
+ * what the prayer sounds like, and a card whose button keeps a stale
+ * marker until its next repost is a smaller wrong than a reset that
+ * appears to fail.
+ */
+export async function clearNativeAlertOverride(): Promise<void> {
+  try {
+    await getMihrabLiveActivityModule()?.clearAlertOverride?.();
+  } catch (e) {
+    console.warn('[liveActivity] clearAlertOverride failed', e);
+  }
 }

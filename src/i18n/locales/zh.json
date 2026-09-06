@@ -91,7 +91,10 @@
     "readingDone": "今日阅读已完成",
     "readOn": "继续阅读",
     "qiblaChipA11y": "朝拜方向 {{degrees}} 度",
-    "qiblaChipHint": "打开朝拜方向指南针"
+    "qiblaChipHint": "打开朝拜方向指南针",
+    "alertOverrideOnce": "{{mode}}（仅此一次）· 重置",
+    "alertOverrideA11y": "{{prayer}} 仅此一次设为{{mode}}",
+    "alertOverrideResetHint": "恢复为{{mode}}"
   },
   "errors": {
     "locationNeededTitle": "需要位置",

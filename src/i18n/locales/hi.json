@@ -91,7 +91,10 @@
     "readingDone": "आज का पाठ पूरा",
     "readOn": "पढ़ते रहें",
     "qiblaChipA11y": "क़िबला {{degrees}} डिग्री",
-    "qiblaChipHint": "क़िबला कम्पास खोलता है"
+    "qiblaChipHint": "क़िबला कम्पास खोलता है",
+    "alertOverrideOnce": "{{mode}} सिर्फ़ इस बार · रीसेट",
+    "alertOverrideA11y": "{{prayer}} सिर्फ़ इस बार {{mode}} पर है",
+    "alertOverrideResetHint": "{{mode}} वापस लाता है"
   },
   "errors": {
     "locationNeededTitle": "स्थान की आवश्यकता है",

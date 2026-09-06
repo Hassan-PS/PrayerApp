@@ -91,7 +91,10 @@
     "readingDone": "Lectura de hoy completada",
     "readOn": "Seguir leyendo",
     "qiblaChipA11y": "Alquibla {{degrees}} grados",
-    "qiblaChipHint": "Abre la brújula de la alquibla"
+    "qiblaChipHint": "Abre la brújula de la alquibla",
+    "alertOverrideOnce": "{{mode}} solo esta vez · Restablecer",
+    "alertOverrideA11y": "{{prayer}} está en {{mode}} solo esta vez",
+    "alertOverrideResetHint": "Restablece {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Ubicación necesaria",

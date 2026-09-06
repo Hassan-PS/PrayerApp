@@ -91,7 +91,10 @@
     "readingDone": "আজকের পড়া শেষ",
     "readOn": "পড়া চালিয়ে যান",
     "qiblaChipA11y": "কিবলা {{degrees}} ডিগ্রি",
-    "qiblaChipHint": "কিবলা কম্পাস খোলে"
+    "qiblaChipHint": "কিবলা কম্পাস খোলে",
+    "alertOverrideOnce": "{{mode}} শুধু এইবার · রিসেট",
+    "alertOverrideA11y": "{{prayer}} শুধু এইবারের জন্য {{mode}} করা আছে",
+    "alertOverrideResetHint": "{{mode}} ফিরিয়ে আনে"
   },
   "errors": {
     "locationNeededTitle": "অবস্থান প্রয়োজন",

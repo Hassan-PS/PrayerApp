@@ -104,6 +104,44 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
     }
   }
 
+  /**
+   * Forget the one-occurrence override, and repaint the card without it.
+   *
+   * The row on the home screen that shows an overridden prayer carries the
+   * way back, and pressing it has to reach BOTH copies: JS clears its own,
+   * this clears the one the card's button reads. Clearing only the first
+   * would leave the button still saying "· once" for a prayer the app had
+   * just put back to its standing setting — two answers again, which is
+   * the thing this whole control exists to stop.
+   *
+   * Repaints immediately rather than waiting for the next tick, because the
+   * user is looking at the row they just pressed and may well have the
+   * shade open over it.
+   */
+  @ReactMethod
+  fun clearAlertOverride(promise: Promise) {
+    try {
+      val prefs = reactContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+      prefs.edit()
+        .remove(LiveActivityAlertModes.KEY_OVERRIDE_EPOCH)
+        .remove(LiveActivityAlertModes.KEY_OVERRIDE_MODE)
+        .remove(MihrabLiveActivityActionReceiver.KEY_MUTED_EPOCH)
+        .apply()
+      runCatching {
+        val payload = loadPayload(reactContext)?.let { JSONObject(it) }
+        if (payload != null) {
+          NotificationManagerCompat.from(reactContext).notify(
+            NOTIF_ID,
+            buildNotificationFromPayload(reactContext, payload),
+          )
+        }
+      }.onFailure { Log.w(NAME, "re-post after clearing override failed", it) }
+      promise.resolve(null)
+    } catch (t: Throwable) {
+      promise.reject("E_CLEAR_OVERRIDE", t)
+    }
+  }
+
   @ReactMethod
   fun cancel(promise: Promise) {
     try {

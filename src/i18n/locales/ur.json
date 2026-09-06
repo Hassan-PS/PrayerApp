@@ -91,7 +91,10 @@
     "readingDone": "آج کی قراءت مکمل",
     "readOn": "پڑھتے رہیں",
     "qiblaChipA11y": "قبلہ {{degrees}} درجے",
-    "qiblaChipHint": "قبلہ کمپاس کھولتا ہے"
+    "qiblaChipHint": "قبلہ کمپاس کھولتا ہے",
+    "alertOverrideOnce": "{{mode}} صرف اس بار · ری سیٹ",
+    "alertOverrideA11y": "{{prayer}} صرف اس بار {{mode}} پر ہے",
+    "alertOverrideResetHint": "{{mode}} بحال کرتا ہے"
   },
   "errors": {
     "locationNeededTitle": "مقام درکار ہے۔",

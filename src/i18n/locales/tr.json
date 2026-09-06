@@ -91,7 +91,10 @@
     "readingDone": "Bugünün okuması tamam",
     "readOn": "Okumaya devam",
     "qiblaChipA11y": "Kıble {{degrees}} derece",
-    "qiblaChipHint": "Kıble pusulasını açar"
+    "qiblaChipHint": "Kıble pusulasını açar",
+    "alertOverrideOnce": "{{mode}} yalnızca bu seferlik · Sıfırla",
+    "alertOverrideA11y": "{{prayer}} yalnızca bu seferlik {{mode}} olarak ayarlı",
+    "alertOverrideResetHint": "{{mode}} ayarını geri yükler"
   },
   "errors": {
     "locationNeededTitle": "Konum gerekli",

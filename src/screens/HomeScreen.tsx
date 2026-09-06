@@ -32,6 +32,7 @@ import { usePrayerDay } from '../hooks/usePrayerDay';
 import { getCacheStatus } from '../prayer/prayerStorage';
 import { usePrefetchSavedLocations } from '../hooks/usePrefetchSavedLocations';
 import { syncPrayerNotifications } from '../notifications/prayerNotifications';
+import { useNextAlertOverride } from '../notifications/adhanMute';
 import { syncPrayerWidget } from '../widget/syncPrayerWidget';
 import { collectWidgetExtras } from '../widget/collectWidgetExtras';
 import { useWidgetDataRevision } from '../widget/useWidgetDataRevision';
@@ -134,6 +135,20 @@ export function HomeScreen() {
   // store, and a widget still saying "17:31" beside a Today card saying
   // "5:31 PM" is the split this dependency exists to prevent.
   const clockHour12 = useClockFormatter().hour12;
+  /**
+   * The Live Activity's one-occurrence override.
+   *
+   * Read here only so the notification resync can see it move. It is not
+   * a setting and it is not written in this process — the card's action
+   * button writes it from a broadcast, and the row that shows it writes
+   * the clearing — so nothing else in this screen's dependency graph
+   * changes when it does. Without this, pressing reset would put the row
+   * right and leave the alarm exactly as the card had set it.
+   */
+  const alertOverride = useNextAlertOverride();
+  const alertOverridePrint = alertOverride
+    ? `${alertOverride.epoch}-${alertOverride.name}-${alertOverride.mode}`
+    : '';
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   // Cap the day-card width to the centered content column so the carousel
   // doesn't overflow the capped column on iPad/Mac windows.
@@ -493,6 +508,9 @@ export function HomeScreen() {
     settings.malikiSecondTimeAlertMinutes,
     settings.malikiSecondTimeEndAlerts,
     settings.prayerAlertModes,
+    // Both directions: the card setting one while the app is open, and
+    // the row clearing it.
+    alertOverridePrint,
     settings.journalNotificationActionsEnabled,
     settings.endOfDayLogReminderEnabled,
     settings.morningDuaReminderEnabled,
@@ -561,6 +579,15 @@ export function HomeScreen() {
         // Which prayers speak, and how. A row cycled from adhan to silent
         // has to take its alarm away, so the schedule is rewritten.
         JSON.stringify(settings.prayerAlertModes),
+        // The Live Activity's one-occurrence override, which is not a
+        // setting and does not come from this process: the card's button
+        // writes it, and the row that shows it writes the clearing. In the
+        // fingerprint because it changes which channel ONE prayer is
+        // scheduled against — or whether it is scheduled at all. Left out,
+        // pressing reset would look like "nothing changed" and the prayer
+        // would keep the alert the card gave it until something else
+        // forced a rewrite.
+        alertOverridePrint,
         state.baseDate.getTime(),
       );
       if (shouldResync(NOTIF_RESYNC_KEY, notifPrint)) {
@@ -673,6 +700,10 @@ export function HomeScreen() {
       settings.malikiSecondTimeAlertMinutes,
       settings.malikiSecondTimeEndAlerts,
       settings.prayerAlertModes,
+      // Pressing reset on a row changes nothing this screen owns, so
+      // without this the effect keeps its identity, the focus pass never
+      // re-runs, and the alarm keeps whatever the card gave it.
+      alertOverridePrint,
       state,
       view,
       locationLabel,

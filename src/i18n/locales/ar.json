@@ -91,7 +91,10 @@
     "readingDone": "انتهت قراءة اليوم",
     "readOn": "تابع القراءة",
     "qiblaChipA11y": "القبلة {{degrees}} درجة",
-    "qiblaChipHint": "يفتح بوصلة القبلة"
+    "qiblaChipHint": "يفتح بوصلة القبلة",
+    "alertOverrideOnce": "{{mode}} هذه المرة فقط · إعادة",
+    "alertOverrideA11y": "{{prayer}} مضبوطة على {{mode}} هذه المرة فقط",
+    "alertOverrideResetHint": "يعيد {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "الموقع مطلوب",

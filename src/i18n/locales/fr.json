@@ -91,7 +91,10 @@
     "readingDone": "Lecture du jour terminée",
     "readOn": "Continuer",
     "qiblaChipA11y": "Qibla {{degrees}} degrés",
-    "qiblaChipHint": "Ouvre la boussole Qibla"
+    "qiblaChipHint": "Ouvre la boussole Qibla",
+    "alertOverrideOnce": "{{mode}} juste cette fois · Réinitialiser",
+    "alertOverrideA11y": "{{prayer}} est sur {{mode}} juste cette fois",
+    "alertOverrideResetHint": "Rétablit {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Emplacement nécessaire",

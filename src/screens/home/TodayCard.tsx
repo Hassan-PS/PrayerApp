@@ -53,12 +53,19 @@ import {
 } from '../../prayer/daruriTimes';
 import type { TimingsMap } from '../../types/prayer';
 import {
+  addDays,
   combineLocalDateAndTime,
   countdownParts,
+  startOfLocalDay,
 } from '../../utils/prayerTimes';
 import { isRtlLanguage } from '../../i18n/layoutDirection';
 import { DayStrip, type DayStripEntry } from './DayStrip';
 import { PrayerRow } from './PrayerRow';
+import {
+  useNextAlertOverride,
+  clearNextAlertOverride,
+} from '../../notifications/adhanMute';
+import { clearNativeAlertOverride } from '../../native/MihrabLiveActivity';
 import { QiblaChipCorner } from './QiblaChip';
 import { HOME_TABLE_RADIUS } from './tokens';
 
@@ -469,6 +476,45 @@ function TodayCardImpl({
     [timings],
   );
   /**
+   * The one occurrence the Live Activity's button has put on a different
+   * alert — and which row of THIS day, if any, that is.
+   *
+   * Matched on the instant, not the name, because that is what the
+   * override is: silencing tonight's Isha says nothing about tomorrow's,
+   * and a name match would put the marker on both. The arithmetic is the
+   * scheduler's — this day's midnight plus the row's clock time — so the
+   * number compared here is the same one the alert was written against.
+   *
+   * It follows the occurrence onto whichever card holds it, which after
+   * Isha is tomorrow's.
+   */
+  const override = useNextAlertOverride();
+  const overrideKey = useMemo(() => {
+    if (!override) return null;
+    const base = addDays(startOfLocalDay(new Date()), selected);
+    for (const key of visibleRows) {
+      if (key !== override.name) continue;
+      const at = combineLocalDateAndTime(base, timings[key]).getTime();
+      if (at === override.epoch) return key;
+    }
+    return null;
+  }, [override, selected, visibleRows, timings]);
+  /**
+   * What the row is set to when nobody has overridden it — what reset
+   * puts back. Read the same way the cycling control reads it, master
+   * switch included, so the word this promises matches the word that
+   * appears once it is pressed.
+   */
+  const standingModeOf = alertModeOf;
+  const resetOverride = useCallback(async () => {
+    // Both copies. JS holds the one the scheduler reads; native holds the
+    // one the card's button labels itself from, so clearing only this
+    // side would leave the button still saying "· once" for a prayer the
+    // app had just put back.
+    await clearNextAlertOverride();
+    await clearNativeAlertOverride();
+  }, []);
+  /**
    * The longest time on this card, which sizes the time column on all of
    * its rows — see `timeSample` in PrayerRow.
    *
@@ -631,10 +677,28 @@ function TodayCardImpl({
           // Only on today's card. On yesterday's or tomorrow's the
           // control would still change a setting for every day, which
           // is not what a tap on a past row looks like it does.
-          alertMode={isToday ? alertModeOf(key) : undefined}
+          // The bell shows what will ACTUALLY happen at this time, which
+          // is the override when there is one. A row that showed the
+          // standing setting while the card showed something else would
+          // be the app holding two answers about one prayer — the thing
+          // the alert-mode button exists to stop.
+          alertMode={
+            isToday
+              ? overrideKey === key && override
+                ? override.mode
+                : alertModeOf(key)
+              : undefined
+          }
           onCycleAlertMode={
             isToday ? () => cycleAlertMode(key) : undefined
           }
+          // Not gated on `isToday`: this one belongs to an instant, and
+          // after Isha that instant is on tomorrow's card.
+          overrideMode={overrideKey === key ? override?.mode : undefined}
+          standingAlertMode={
+            overrideKey === key ? standingModeOf(key) : undefined
+          }
+          onResetAlertMode={overrideKey === key ? resetOverride : undefined}
           timeSample={timeSample}
         />
       ))}

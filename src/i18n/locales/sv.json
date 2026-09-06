@@ -91,7 +91,10 @@
     "readingDone": "Dagens läsning klar",
     "readOn": "Läs vidare",
     "qiblaChipA11y": "Qibla {{degrees}} grader",
-    "qiblaChipHint": "Öppnar Qibla-kompassen"
+    "qiblaChipHint": "Öppnar Qibla-kompassen",
+    "alertOverrideOnce": "{{mode}} bara denna gång · Återställ",
+    "alertOverrideA11y": "{{prayer}} är inställd på {{mode}} bara denna gång",
+    "alertOverrideResetHint": "Återställer {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Plats krävs",

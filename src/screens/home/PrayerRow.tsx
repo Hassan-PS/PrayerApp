@@ -10,6 +10,7 @@ import {
 import { useClockFormatter } from '../../hooks/useClockFormatter';
 import { HOME_ROW_PADDING_V } from './tokens';
 import { AlertModeButton } from './AlertModeButton';
+import { AlertOverrideChip } from './AlertOverrideChip';
 import type { PrayerAlertMode } from '../../settings/alertModes';
 
 /**
@@ -63,6 +64,24 @@ type PrayerRowProps = {
   alertMode?: PrayerAlertMode;
   onCycleAlertMode?: () => void;
   /**
+   * What THIS occurrence is set to, when the Live Activity's button has
+   * put it on something other than the standing setting for this one
+   * time. Absent — the usual case — means there is nothing to explain or
+   * undo, and `alertMode` is the whole answer.
+   *
+   * Carried separately from `alertMode` because the two are shown in
+   * different places and on different days. `alertMode` is the cycling
+   * control, which only today's card has: a tap there changes every
+   * Fajr, and that is not what a tap on tomorrow's row looks like it
+   * does. This one belongs to a single instant, so it appears on
+   * whichever day holds it — including tomorrow, which is where an
+   * override set after Isha lands.
+   */
+  overrideMode?: PrayerAlertMode;
+  /** What reset puts back: the row's standing setting. */
+  standingAlertMode?: PrayerAlertMode;
+  onResetAlertMode?: () => void;
+  /**
    * The widest time on this card, which sizes the time column on EVERY
    * row of it.
    *
@@ -87,6 +106,9 @@ function PrayerRowImpl({
   daruriApprox = false,
   alertMode,
   onCycleAlertMode,
+  overrideMode,
+  standingAlertMode,
+  onResetAlertMode,
   timeSample,
 }: PrayerRowProps) {
   const { t } = useTranslation();
@@ -149,6 +171,21 @@ function PrayerRowImpl({
                 : clock(daruriAt),
             })}
           </Text>
+        ) : null}
+        {/* Under the name for the same reason the line above is, and for
+            one more: the trailing edge is a COLUMN, aligned across every
+            row of the card. A control that appeared on one row would push
+            that row's bell and time out of line with the other six — the
+            defect the held dot slot and the sizing sample below both
+            exist to prevent. See AlertOverrideChip. */}
+        {overrideMode && standingAlertMode && onResetAlertMode ? (
+          <AlertOverrideChip
+            mode={overrideMode}
+            standingMode={standingAlertMode}
+            palette={palette}
+            onPress={onResetAlertMode}
+            prayerLabel={t(`prayer.${prayerKey}`)}
+          />
         ) : null}
       </View>
       {/* The control and the time travel together on the trailing edge.

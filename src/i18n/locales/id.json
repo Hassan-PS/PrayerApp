@@ -91,7 +91,10 @@
     "readingDone": "Bacaan hari ini selesai",
     "readOn": "Lanjut membaca",
     "qiblaChipA11y": "Kiblat {{degrees}} derajat",
-    "qiblaChipHint": "Membuka kompas kiblat"
+    "qiblaChipHint": "Membuka kompas kiblat",
+    "alertOverrideOnce": "{{mode}} kali ini saja · Setel ulang",
+    "alertOverrideA11y": "{{prayer}} disetel ke {{mode}} kali ini saja",
+    "alertOverrideResetHint": "Mengembalikan {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Lokasi diperlukan",

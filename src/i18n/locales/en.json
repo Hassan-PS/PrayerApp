@@ -91,7 +91,10 @@
     "readingDone": "Today's reading done",
     "readOn": "Read on",
     "qiblaChipA11y": "Qibla {{degrees}} degrees",
-    "qiblaChipHint": "Opens the Qibla compass"
+    "qiblaChipHint": "Opens the Qibla compass",
+    "alertOverrideOnce": "{{mode}} just this once · Reset",
+    "alertOverrideA11y": "{{prayer}} is set to {{mode}} just this once",
+    "alertOverrideResetHint": "Restores {{mode}}"
   },
   "errors": {
     "locationNeededTitle": "Location needed",

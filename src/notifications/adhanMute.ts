@@ -50,6 +50,8 @@
  * applies the override to it, because that is where the audible list is
  * built.
  */
+import { useEffect, useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 import notifee, { AndroidImportance, TriggerType } from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { isNonPrayerEvent } from '../types/prayer';
@@ -146,6 +148,86 @@ export function overrideAppliesTo(
   return !!o && o.epoch === epochMs && o.name === name;
 }
 
+/**
+ * ── THE APP HAS TO BE ABLE TO SEE THIS ──────────────────────────────
+ *
+ * An override is written by a broadcast receiver and a headless task —
+ * neither of which the app is part of — and until it could be read back,
+ * the home screen went on showing the standing setting while the card
+ * showed something else. The app held two answers about the same prayer
+ * and offered no way to reconcile them, which is the exact complaint the
+ * whole three-mode button was built to answer.
+ *
+ * So it is a store. The row for the affected occurrence renders what will
+ * actually happen at that time, says that it is only this once, and
+ * carries the way back.
+ *
+ * Two things move it: the task itself, which runs in this process when
+ * the app is alive (`allowedInForeground`), and coming back to the
+ * foreground, which covers every tap made while the app was not.
+ */
+let current: NextAlertOverride | null = null;
+let currentRaw: string | null = null;
+const listeners = new Set<() => void>();
+
+function publish(raw: string | null): void {
+  // Compared as the raw string so the snapshot keeps its identity when
+  // nothing moved — `useSyncExternalStore` re-renders on reference change,
+  // and a fresh object per read would re-render every row on every check.
+  if (raw === currentRaw) return;
+  currentRaw = raw;
+  current = parseNextAlertOverride(raw);
+  for (const l of listeners) l();
+}
+
+/** Re-read the stored override and tell anyone watching. */
+export async function refreshNextAlertOverride(): Promise<void> {
+  try {
+    publish(await AsyncStorage.getItem(MUTED_NEXT_ADHAN_KEY));
+  } catch {
+    // Leave the last known answer standing rather than claiming there is
+    // none: "no override" is a visible state, and flickering out of it on
+    // a transient read error would take the way back with it.
+  }
+}
+
+/**
+ * Forget the override — the row's reset.
+ *
+ * Only half the job: the native side keeps its own copy, which is what
+ * the card's button reads, so the caller clears that too. See
+ * `clearNativeAlertOverride` in native/MihrabLiveActivity.
+ */
+export async function clearNextAlertOverride(): Promise<void> {
+  try {
+    await AsyncStorage.setItem(MUTED_NEXT_ADHAN_KEY, '');
+  } finally {
+    publish('');
+  }
+}
+
+/** The override as the UI sees it, or null. Re-read on foreground. */
+export function useNextAlertOverride(): NextAlertOverride | null {
+  const value = useSyncExternalStore(
+    listener => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    () => current,
+    () => null,
+  );
+  useEffect(() => {
+    refreshNextAlertOverride();
+    const sub = AppState.addEventListener('change', s => {
+      // The tap that set it usually happened on the lock screen, with the
+      // app not running. This is when we find out.
+      if (s === 'active') refreshNextAlertOverride();
+    });
+    return () => sub.remove();
+  }, []);
+  return value;
+}
+
 /** What the native side sends across the HeadlessJS boundary. */
 export type AdhanMuteTaskData = {
   epoch: number | string;
@@ -186,10 +268,11 @@ export async function adhanMuteToggleTask(
     if (!Number.isFinite(epoch) || epoch <= 0 || !name) return;
     const mode = modeFromTaskData(data, name);
 
-    await AsyncStorage.setItem(
-      MUTED_NEXT_ADHAN_KEY,
-      JSON.stringify({ epoch, name, mode } satisfies NextAlertOverride),
-    );
+    const raw = JSON.stringify({ epoch, name, mode } satisfies NextAlertOverride);
+    await AsyncStorage.setItem(MUTED_NEXT_ADHAN_KEY, raw);
+    // Same process as the app when it is alive, so the row that shows this
+    // updates while the shade is still open over it.
+    publish(raw);
 
     // Past events can't be changed; the marker alone is enough for any resync.
     if (epoch <= Date.now()) return;
