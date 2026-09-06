@@ -194,3 +194,60 @@ describe('the editions stay out of the JS bundle', () => {
     expect(src).toMatch(/ReactNativeBlobUtil\.fs\.dirs\.MainBundleDir/);
   });
 });
+
+
+describe('the Qur’an’s own text stays out of the bundle too', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const ROOT = path.join(__dirname, '..');
+  const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf-8');
+
+  it('reaches a surah by filename, not by a hundred requires', () => {
+    // The switch had one `require` per surah under a comment explaining
+    // that Metro needs literal paths. It does — and it follows every one
+    // of them unconditionally, which is how 2.4 MB of Qur'an ended up in
+    // a bundle Android stores without compressing.
+    const src = read('src/quran/quran.ts');
+    expect(src).not.toMatch(/require\(['"]\.\/data\/surahs/);
+    expect(src).toContain(
+      "`quran/surahs/${String(n).padStart(3, '0')}.json`",
+    );
+  });
+
+  it('ships every surah that is not inline', () => {
+    // 2..114; al-Fatihah is inline, so the reader's first page needs no
+    // read at all.
+    const files = fs
+      .readdirSync(path.join(ROOT, 'assets/quran/surahs'))
+      .filter((f: string) => /^\d{3}\.json$/.test(f))
+      .map((f: string) => Number(f.slice(0, 3)))
+      .sort((a: number, b: number) => a - b);
+    expect(files[0]).toBe(1);
+    expect(files[files.length - 1]).toBe(114);
+    expect(files).toHaveLength(114);
+  });
+
+  it('warms explicitly for the one caller that cannot await', () => {
+    // `verifyRiwayahDataset` walks a downloaded muṣḥaf against our corpus
+    // inside loops it cannot await, and its callers skip a surah they
+    // have no reference for. Unwarmed, that check skips everything —
+    // which passes everything, and installs a broken muṣḥaf quietly.
+    const dl = read('src/quran/riwayahDownload.ts');
+    expect(dl).toMatch(/await warmSurahCache\(\);/);
+    expect(dl).toMatch(/finally \{\s*\n\s*releaseSurahCache\(\);/);
+  });
+
+  it('counts the holds, so a nested release cannot empty it', () => {
+    const src = read('src/quran/quran.ts');
+    expect(src).toMatch(/warmHolds = Math\.max\(0, warmHolds - 1\);/);
+    expect(src).toMatch(/if \(warmHolds === 0\) warmed\.clear\(\);/);
+  });
+
+  it('leaves no source tree behind', () => {
+    expect(fs.existsSync(path.join(ROOT, 'src/quran/data/surahs'))).toBe(false);
+    // Raw Tanzil input for the import script: reproducible, and the
+    // script's own closing instruction is to gitignore it.
+    expect(fs.existsSync(path.join(ROOT, 'src/quran/data/source'))).toBe(false);
+    expect(read('.gitignore')).toContain('src/quran/data/source/');
+  });
+});

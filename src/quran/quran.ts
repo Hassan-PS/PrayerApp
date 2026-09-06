@@ -228,14 +228,14 @@ export function getSurahAyahs(number: number): {
 }
 
 /**
- * Async lazy loader — returns the surah's ayah text + translation
- * pulled from `data/surahs/{NNN}.json`. Falls back to the inline
- * `SURAH_TEXT` map if the data file isn't present yet (which is the
- * case for surahs 2–114 until the Tanzil corpus is imported).
+ * Async lazy loader — the surah's ayah text and translation, read from
+ * `assets/quran/surahs/{NNN}.json`. Falls back to the inline
+ * `SURAH_TEXT` map for al-Fatihah, which never needs a read.
  *
- * The async signature lets a future implementation switch to
- * `require('./data/surahs/' + pad3(n) + '.json')` (Metro auto-resolves
- * static `require` paths) or to a network fetch with caching.
+ * The async signature was here long before it was needed, against the
+ * day this stopped being a `require`. That day came: the files are app
+ * assets now rather than part of the JS bundle, and every caller was
+ * already awaiting.
  *
  * Returns null only when `n` is out of range (1..114).
  */
