@@ -109,7 +109,12 @@ export type MihrabLiveActivityPayload = {
   // ── Android 17 enhancements ──────────────────────────────────────
   /** Optional second metric on the countdown (MetricStyle) design.
    *  'time' = prayer clock time, 'elapsed' = since previous prayer. */
-  secondMetric?: 'off' | 'time' | 'elapsed';
+  /**
+   * Always 'time' now — the next prayer's clock time beside the countdown.
+   * It was a setting with an 'off' choice; see settings/types.ts for why a
+   * picker with one sensible answer stopped being a picker.
+   */
+  secondMetric?: 'time';
   /** When true, show the "Mute next adhan" toggle action (an adhan is
    *  selected and prayer notifications are enabled). */
   adhanActionEnabled?: boolean;

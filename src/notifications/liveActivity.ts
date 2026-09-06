@@ -420,20 +420,15 @@ export async function startOrUpdateLiveActivity(
         display: r.display,
       })),
     }));
-    // Android 17 extras: second metric + the "Mute next adhan" toggle. Read
-    // from settings here (once per JS sync — the per-second redraw is native)
-    // rather than threading through every layer.
-    let secondMetric: 'off' | 'time' = 'off';
+    // Android 17 extras: the lock-screen button and the "Mute next adhan"
+    // toggle. Read from settings here (once per JS sync — the per-second
+    // redraw is native) rather than threading through every layer.
     let lockButton = true;
     let adhanActionEnabled = false;
     let adhanChannelId = 'prayer-times-default';
     let adhanSoundId = 'default';
     try {
       const s = await loadSettings();
-      // Anything that is not 'time' is 'off' — which also migrates the
-      // retired 'elapsed' (a stopwatch since the previous prayer) off the
-      // cards of anyone who had chosen it, without a settings rewrite.
-      secondMetric = s.liveActivitySecondMetric === 'time' ? 'time' : 'off';
       lockButton = s.liveActivityLockButton !== false;
       const soundOpt = getNotificationSoundOption(s.notificationSound);
       // Resolved rather than read off the table: the user's own recording has
@@ -475,7 +470,9 @@ export async function startOrUpdateLiveActivity(
       showHijri: input.showHijri,
       showLocation: input.showLocation,
       fgsText: i18n.t('liveActivity.fgsText', 'Prayer countdown active'),
-      secondMetric,
+      // Always. It was a setting once — see settings/types.ts on why the
+      // clock time beside the countdown stopped being a question.
+      secondMetric: 'time',
       adhanActionEnabled,
       muteLabel: i18n.t('liveActivity.muteNext', 'Mute next adhan'),
       unmuteLabel: i18n.t('liveActivity.unmuteNext', 'Unmute next adhan'),

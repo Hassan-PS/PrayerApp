@@ -310,18 +310,22 @@ export type PrayerAppSettings = {
    * Android only; ignored on iOS.
    */
   liveActivityDesign: 'timeline' | 'countdown' | 'markers';
-  /**
-   * Optional second metric shown on the Android 17 countdown (MetricStyle)
-   * design. 'off' keeps the single big countdown; 'time' puts the next
-   * prayer's clock time beside it. Android 17 only; ignored elsewhere.
+  /*
+   * `liveActivitySecondMetric` used to live here: a picker on the countdown
+   * design offering 'off', 'time' (the next prayer's clock time beside the
+   * countdown) and, before that, a stopwatch counting up since the previous
+   * prayer.
    *
-   * A third choice — a stopwatch counting up since the previous prayer —
-   * used to live here and was removed: on a card whose whole point is one
-   * number counting down, a second clock counting up reads as a
-   * contradiction rather than as extra information. Values stored by older
-   * builds are coerced back to 'off' where the setting is read.
+   * The stopwatch went first — on a card whose whole point is one number
+   * falling to zero, a second clock climbing away from it reads as a
+   * contradiction rather than as more information. That left two choices,
+   * and then the answer to "should the card also say what time the prayer
+   * is" turned out to be yes, always: it is the one fact the countdown does
+   * not carry, it costs a line the card already has room for, and nobody
+   * chooses to know less. A picker with one sensible answer is a question
+   * that should not have been asked, so the setting is gone and the clock
+   * time is simply always there. Anything an old install stored is ignored.
    */
-  liveActivitySecondMetric: 'off' | 'time';
   /**
    * Whether the Live Activity card carries its lock-screen toggle button.
    *
@@ -518,7 +522,6 @@ export const DEFAULT_SETTINGS: PrayerAppSettings = {
   liveActivityShowHijri: true,
   liveActivityShowLocation: true,
   liveActivityDesign: 'timeline',
-  liveActivitySecondMetric: 'off',
   liveActivityLockButton: true,
   // Sunrise on by default (unchanged behaviour); the two night times off by
   // default so existing users see no new rows/notifications until they opt in.

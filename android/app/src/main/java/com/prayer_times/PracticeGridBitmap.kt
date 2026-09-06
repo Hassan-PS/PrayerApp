@@ -76,9 +76,16 @@ object PracticeGridBitmap {
    * Not a minimum and not a maximum — the cell ends up whatever the box
    * divides into. It is the size at which a day is comfortably readable on
    * a home screen, and so the size that decides whether a given height has
-   * room for another row of them.
+   * room for another row of them, and how many days fit across.
+   *
+   * 20, down from 26. At 26 a day came out around 24dp on a four-wide
+   * card, which is bigger than a day needs to be to carry a fill, a ring
+   * and a corner dot — the marks are drawn as fractions of the cell, so
+   * they shrink with it and stay legible. The squares now read as a graph
+   * rather than as buttons, and the same card carries a couple of columns
+   * more history for it.
    */
-  private const val TARGET_CELL_DP = 26f
+  private const val TARGET_CELL_DP = 20f
 
   /** Everything the grid needs to be drawn into a particular box. */
   data class Layout(

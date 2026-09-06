@@ -45,10 +45,10 @@ class PrayerWidgetModule(private val reactContext: ReactApplicationContext) :
     try {
       val entries = WidgetLogQueue.take(reactContext)
       promise.resolve(WidgetLogQueue.serialize(entries))
-      // The ticks were being drawn from the queue; now the app owns them, so
-      // the widget has to re-read or it would show them twice — once from
-      // its own queue and once from the payload the app is about to push.
-      PrayerWidgetProvider.requestUpdate(reactContext)
+      // NO REDRAW HERE. See takeTasbihQueue below for the whole story: the
+      // hand-over is not the moment the app owns these taps, it is the
+      // moment the app has WRITTEN them, and redrawing in between shows a
+      // card from which they have vanished.
     } catch (e: Exception) {
       promise.reject("E_WIDGET_LOG_QUEUE", e.message, e)
     }
@@ -67,10 +67,33 @@ class PrayerWidgetModule(private val reactContext: ReactApplicationContext) :
     try {
       val entries = WidgetTasbihQueue.take(reactContext)
       promise.resolve(WidgetTasbihQueue.serialize(entries))
-      // The count was being drawn by projecting the queue over the payload;
-      // now the app owns those taps, so the widget has to re-read or it
-      // would count them twice.
-      PrayerWidgetTasbihProvider.requestUpdate(reactContext)
+      // NO REDRAW HERE, AND THIS IS THE WHOLE OF THE BUG IT USED TO CAUSE.
+      //
+      // There used to be a `requestUpdate` on this line, to stop the widget
+      // counting the same taps twice — once from its own queue and once from
+      // the payload the app was about to push. The reasoning was right and
+      // the timing was wrong, because "the app owns these taps now" is not
+      // true yet at this line. Three things have to happen for a tap to move
+      // from the queue into the payload:
+      //
+      //   1. the queue is cleared            ← `take`, one line above
+      //   2. the app applies it to the store ← a promise the JS side has not
+      //                                        even resolved yet
+      //   3. the app republishes the payload ← later still, and debounced
+      //
+      // Redrawing at 1 draws the one state in which the tap exists NOWHERE:
+      // gone from the queue the widget projects, absent from the payload it
+      // projects onto. So the number fell back to what it was before the
+      // tap — to zero on a counter that had just been started, or to the
+      // previous dhikr's count after Next — and stayed there for as long as
+      // 2 and 3 took. Reported as "the count becomes zero for a second and
+      // then reacts to the button".
+      //
+      // The redraw was also never needed. Step 3 ends in `setData`, which
+      // fans `requestUpdate` out to every widget kind including this one, so
+      // the correct redraw already happens at the only moment it is correct.
+      // Until then the projection is right: the queue we just took is still
+      // the truth about these taps as far as the payload is concerned.
     } catch (e: Exception) {
       promise.reject("E_WIDGET_TASBIH_QUEUE", e.message, e)
     }

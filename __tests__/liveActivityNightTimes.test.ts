@@ -28,7 +28,6 @@ jest.mock('../src/settings/storage', () => ({
   loadSettings: jest.fn(async () => ({
     notificationsEnabled: true,
     notificationSound: 'default',
-    liveActivitySecondMetric: 'off',
     liveActivityLockButton: true,
   })),
 }));

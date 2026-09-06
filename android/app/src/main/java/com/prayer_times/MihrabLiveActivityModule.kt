@@ -410,9 +410,22 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
         val countdown = if (withSeconds) formatHMS(remaining) else formatRemaining(remaining)
         val shortText = if (withSeconds) formatHMS(remaining) else formatRemainingShort(remaining)
         val nextLabel = p.optString("nextLabel", "")
-        // Inline countdown next to the prayer name.
-        val inlineTitle =
-          if (nextLabel.isNotEmpty()) "$nextLabel · $countdown" else title
+        // THE PRAYER'S NAME, AND NOT A SECOND COUNTDOWN.
+        //
+        // This used to be the name with the countdown interpolated after it,
+        // and every one of these cards also runs `setUsesChronometer(true)` with
+        // `setChronometerCountDown(true)`, which is the platform drawing the
+        // same countdown in the header slot, to the second, for free. So the
+        // card carried two countdowns to one prayer: a live H:MM:SS ticking
+        // in the corner and a stale minute-resolution copy of it in the
+        // title, which only moved when the service re-posted. They disagreed
+        // for most of every minute.
+        //
+        // The chronometer is the better of the two — it has the seconds, it
+        // costs no re-posts, and it is what the system keeps ticking on the
+        // always-on display — so it is the countdown now, and the title is
+        // the one thing it cannot say: which prayer this is counting to.
+        val inlineTitle = if (nextLabel.isNotEmpty()) nextLabel else title
 
         // Two designs, both NOT colorized (a colorized notification is not
         // eligible for the status-bar chip) and both keeping the chip + AOD:
@@ -547,7 +560,13 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
         val arrivedLabel = if (justArrived) labelForEpoch(p, prevEpochMs) else ""
         val nowWord = p.optString("nowWord", "Now")
         val nextKey = p.optString("nextKey", "")
-        val secondMetric = p.optString("secondMetric", "off")
+        // "time" by default, not "off". This was a user setting with a
+        // "None" choice; it is not one any more — the next prayer's clock
+        // time is the one fact a falling countdown does not carry, so it is
+        // always beside it. Defaulting here rather than only in the payload
+        // means a card rebuilt from a stored payload written by an older
+        // build gets it too, without a migration.
+        val secondMetric = p.optString("secondMetric", "time")
         // Hijri date shown next to the next prayer (in the header subtext).
         val hijri = if (p.optBoolean("showHijri", false)) p.optString("hijriLabel", "") else ""
         // On arrival, flag SAFE green regardless of the brand/Material accent.
@@ -630,9 +649,14 @@ class MihrabLiveActivityModule(private val reactContext: ReactApplicationContext
               Icon.createWithResource(ctx, R.drawable.ic_stat_prayer)
             } else null,
           )
+          // The prayer's name alone — the chronometer below carries the
+          // countdown, to the second and without a re-post. See the same
+          // note on `inlineTitle` in the Android 16 builder above: two
+          // countdowns to one prayer, one of them a minute-resolution copy
+          // that disagreed with the other for most of every minute.
           val inlineTitle = when {
             arrivedTitle != null -> arrivedTitle
-            nextLabel.isNotEmpty() -> "$nextLabel · $countdown"
+            nextLabel.isNotEmpty() -> nextLabel
             else -> title
           }
           if (dayStyle != null) {

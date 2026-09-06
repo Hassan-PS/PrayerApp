@@ -116,7 +116,6 @@ export type LiveActivitySlice = Pick<
   | 'liveActivityShowHijri'
   | 'liveActivityShowLocation'
   | 'liveActivityDesign'
-  | 'liveActivitySecondMetric'
   | 'liveActivityLockButton'
 >;
 
@@ -328,7 +327,6 @@ export function PrayerSettingsProvider({
       liveActivityShowHijri: settings.liveActivityShowHijri,
       liveActivityShowLocation: settings.liveActivityShowLocation,
       liveActivityDesign: settings.liveActivityDesign,
-      liveActivitySecondMetric: settings.liveActivitySecondMetric,
       liveActivityLockButton: settings.liveActivityLockButton,
     }),
     [
@@ -338,7 +336,6 @@ export function PrayerSettingsProvider({
       settings.liveActivityShowHijri,
       settings.liveActivityShowLocation,
       settings.liveActivityDesign,
-      settings.liveActivitySecondMetric,
       settings.liveActivityLockButton,
     ],
   );

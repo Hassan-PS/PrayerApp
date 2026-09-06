@@ -44,7 +44,8 @@ function DesignPreview({
     // tracker thumb at "now" (native ProgressStyle points + tracker icon).
     return (
       <View style={[styles.preview, { backgroundColor: surface }]}>
-        <Text style={[styles.previewRow, { color: text }]}>Maghrib · 2:18</Text>
+        <Text style={[styles.previewHeader, { color: muted }]}>2:18:42</Text>
+        <Text style={[styles.previewRow, { color: text }]}>Maghrib</Text>
         <View style={styles.segRow}>
           {[0, 1, 2, 3, 4, 5, 6].map(i => (
             <View key={i} style={styles.markerSegWrap}>
@@ -78,7 +79,8 @@ function DesignPreview({
   // filled segments up to "now", the rest dimmed.
   return (
     <View style={[styles.preview, { backgroundColor: surface }]}>
-      <Text style={[styles.previewRow, { color: text }]}>Maghrib · 2:18</Text>
+      <Text style={[styles.previewHeader, { color: muted }]}>2:18:42</Text>
+      <Text style={[styles.previewRow, { color: text }]}>Maghrib</Text>
       <View style={styles.segRow}>
         {[0, 1, 2, 3, 4, 5, 6].map(i => (
           <View
@@ -194,57 +196,6 @@ function LiveActivityCardImpl() {
             })}
           </View>
 
-          {design === 'countdown' && (
-            <View style={{ marginTop: 16 }}>
-              <Text style={[s.label, { color: palette.muted }]}>
-                {t('settings.laSecondMetricLabel', {
-                  defaultValue: 'Second metric',
-                })}
-              </Text>
-              <View style={styles.chipRow}>
-                {(
-                  [
-                    { id: 'off', dv: 'None' },
-                    { id: 'time', dv: 'Prayer time' },
-                  ] as const
-                ).map(opt => {
-                  // Anything not 'time' is 'off', which also catches the
-                  // retired 'since last' stopwatch on an older install.
-                  const sel =
-                    (settings.liveActivitySecondMetric === 'time'
-                      ? 'time'
-                      : 'off') === opt.id;
-                  return (
-                    <Pressable
-                      key={opt.id}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: sel }}
-                      onPress={() => update({ liveActivitySecondMetric: opt.id })}
-                      style={[
-                        styles.chip,
-                        {
-                          borderColor: sel ? palette.accent : palette.border,
-                          backgroundColor: sel
-                            ? palette.accentBg
-                            : 'transparent',
-                          borderWidth: sel ? 2 : StyleSheet.hairlineWidth,
-                        },
-                      ]}>
-                      <Text
-                        style={{
-                          color: sel ? palette.accent : palette.text,
-                          fontSize: 14,
-                        }}>
-                        {t(`settings.laSecondMetric_${opt.id}`, {
-                          defaultValue: opt.dv,
-                        })}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          )}
         </SettingsBlock>
       ) : null}
 
@@ -298,6 +249,8 @@ const styles = StyleSheet.create({
   previewCountdown: { fontSize: 22, fontWeight: '800', letterSpacing: 0.5 },
   previewSub: { fontSize: 11, fontWeight: '500' },
   previewRow: { fontSize: 13, fontWeight: '700' },
+  /* The header slot, where the platform's own chronometer ticks. */
+  previewHeader: { fontSize: 10, fontWeight: '600' },
   segRow: {
     flexDirection: 'row',
     gap: 3,
