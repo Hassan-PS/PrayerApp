@@ -96,7 +96,25 @@ export type WidgetPrayerKey = (typeof WIDGET_ROW_KEYS)[number];
  * widget beside them count down to something else. A toggle means one thing
  * everywhere or it means nothing.
  */
-const EXTRA_ROW_KEYS = ['Midnight', 'Lastthird', 'Firstthird'] as const;
+export const EXTRA_ROW_KEYS = ['Midnight', 'Lastthird', 'Firstthird'] as const;
+
+/**
+ * Every key that can become `nextKey` — and so every key the Live
+ * Activity's alert-mode button can be pointed at.
+ *
+ * Exported because that button offers three modes to a prayer and two to
+ * a time, and `settings/alertModes.ts` decides which by asking whether a
+ * key is one of `OPTIONAL_TIME_KEYS`. Those two lists have no reason to
+ * stay in step on their own: add a fifth optional time here and it would
+ * quietly inherit the prayer's cycle, and the card would offer the call
+ * to prayer for it. `__tests__/liveActivityAlertCycle.test.ts` reads this
+ * and refuses.
+ */
+export const COUNTDOWN_KEYS = [
+  ...WIDGET_ROW_KEYS,
+  'Sunrise',
+  ...EXTRA_ROW_KEYS,
+] as const;
 
 export type WidgetPrayerPayload = {
   /** Calendar day these times apply to (e.g. Wed, Apr 9). */

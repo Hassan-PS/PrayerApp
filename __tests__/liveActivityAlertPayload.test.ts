@@ -127,6 +127,83 @@ describe('the payload the card is built from', () => {
   });
 });
 
+describe('every optional time on the card, not just Sunrise', () => {
+  // Sunrise is the one that gets remembered. Islamic Midnight, the Last
+  // Third and the First Third are the three that do not — they are
+  // carried in `extraRows`, outside the five, and they reach the
+  // countdown exactly like anything else the user turned on.
+  const withNightMarks = {
+    ...day,
+    Midnight: '00:35',
+    Lastthird: '02:20',
+    Firstthird: '22:12',
+  };
+  const ORIGINAL_OS = Platform.OS;
+  beforeAll(() => {
+    Object.defineProperty(Platform, 'OS', { get: () => 'android' });
+  });
+  afterAll(() => {
+    Object.defineProperty(Platform, 'OS', { get: () => ORIGINAL_OS });
+  });
+
+  beforeEach(async () => {
+    mockDisplay.mockClear();
+    await syncLiveActivity({
+      options: { enabled: true },
+      today: withNightMarks,
+      tomorrow: withNightMarks,
+      week: [withNightMarks, withNightMarks],
+      locationName: 'Stockholm',
+      now: new Date(2026, 5, 14, 9, 0, 0, 0),
+    } as never);
+  });
+
+  it('sends all three night marks, on every day', () => {
+    const p = sent();
+    const keysOf = (rows: { key: string }[]) => rows.map(r => r.key).sort();
+    expect(keysOf(p.extraRows)).toEqual([
+      'Firstthird',
+      'Lastthird',
+      'Midnight',
+    ]);
+    for (const d of p.days) {
+      expect(keysOf(d.extraRows)).toEqual([
+        'Firstthird',
+        'Lastthird',
+        'Midnight',
+      ]);
+    }
+  });
+
+  it('gives each of them a mode, and never the adhan', () => {
+    const p = sent();
+    const times = [
+      p.sunriseRow,
+      ...p.extraRows,
+      ...p.days.flatMap(
+        (d: { extraRows: unknown[]; sunriseRow?: unknown }) => [
+          ...d.extraRows,
+          ...(d.sunriseRow ? [d.sunriseRow] : []),
+        ],
+      ),
+    ] as { key: string; mode: string }[];
+    // Four kinds of time, every day in the window.
+    expect(new Set(times.map(r => r.key))).toEqual(
+      new Set(['Sunrise', 'Midnight', 'Lastthird', 'Firstthird']),
+    );
+    for (const r of times) {
+      expect(r.mode).toBeTruthy();
+      expect(r.mode).not.toBe('adhan');
+    }
+    // An adhan IS chosen in these settings, so this is not passing by
+    // accident: the five in the same payload do carry it.
+    expect(p.rows.every((r: { mode: string }) => r.mode === 'adhan')).toBe(
+      false,
+    );
+    expect(p.rows.some((r: { mode: string }) => r.mode === 'adhan')).toBe(true);
+  });
+});
+
 describe('the master switch still has the last word', () => {
   const ORIGINAL_OS = Platform.OS;
   beforeAll(() => {

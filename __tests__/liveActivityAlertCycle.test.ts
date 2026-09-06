@@ -30,7 +30,12 @@ import {
   nextAlertMode,
   modesFor,
 } from '../src/settings/alertModes';
-import { OPTIONAL_TIME_KEYS } from '../src/types/prayer';
+import { OPTIONAL_TIME_KEYS, isNonPrayerEvent } from '../src/types/prayer';
+import {
+  COUNTDOWN_KEYS,
+  WIDGET_ROW_KEYS,
+  EXTRA_ROW_KEYS,
+} from '../src/widget/buildWidgetPayload';
 import {
   parseNextAlertOverride,
   overrideAppliesTo,
@@ -92,6 +97,52 @@ describe('the two sides agree on what the modes are', () => {
       .sort();
     expect(keys).toEqual([...OPTIONAL_TIME_KEYS].sort());
   });
+
+  it('accounts for every event the card can point at', () => {
+    // The button is only ever aimed at `nextKey`, and `nextKey` is a
+    // closed list. Whatever is on it is either one of the five — which
+    // may sound the adhan — or a time, which may not. There is no third
+    // case, and this is what says so: add a fifth optional time to the
+    // payload without adding it to OPTIONAL_TIME_KEYS and it would
+    // quietly inherit the prayer's three-mode cycle, and the card would
+    // offer the call to prayer for it.
+    for (const key of COUNTDOWN_KEYS) {
+      const isSalah = (WIDGET_ROW_KEYS as readonly string[]).includes(key);
+      expect(modesFor(key).includes('adhan')).toBe(isSalah);
+    }
+  });
+
+  it('has no key on that list that nothing has an opinion about', () => {
+    // The other direction: every key the payload can produce is either a
+    // salah or a known non-prayer event, so none of them reaches the
+    // cycle — or the headless task's channel choice — by accident.
+    const salah = new Set<string>(WIDGET_ROW_KEYS);
+    const times = new Set<string>(OPTIONAL_TIME_KEYS);
+    for (const key of COUNTDOWN_KEYS) {
+      expect(salah.has(key) || times.has(key)).toBe(true);
+      expect(isNonPrayerEvent(key)).toBe(!salah.has(key));
+    }
+    // And the times the payload carries are exactly the times the app
+    // calls optional — not a subset that leaves one unguarded.
+    expect([...EXTRA_ROW_KEYS, 'Sunrise'].sort()).toEqual(
+      [...OPTIONAL_TIME_KEYS].sort(),
+    );
+  });
+
+  it.each([...OPTIONAL_TIME_KEYS])(
+    '%s is offered two modes and neither is the adhan',
+    key => {
+      // Named one by one rather than only as a set: Sunrise is the one
+      // anybody thinks of, and Islamic Midnight, the Last Third and the
+      // First Third are the three that get forgotten. Each is a time
+      // somebody asked to be told about, and none of them is a prayer.
+      expect(modesFor(key)).toEqual([...EVENT_ALERT_MODES]);
+      expect(modesFor(key)).toHaveLength(2);
+      // A full lap comes back where it started, through no third state.
+      const first = modesFor(key)[0];
+      expect(nextAlertMode(key, nextAlertMode(key, first))).toBe(first);
+    },
+  );
 
   it('never lets the adhan reach one of them', () => {
     // Both directions of the same guard: the list a night mark cycles
